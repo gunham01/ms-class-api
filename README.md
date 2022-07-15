@@ -1,1 +1,1 @@
-# vnua-ms-classes-be
+# VNUA MS Classes BE
