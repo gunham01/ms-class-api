@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  teacherId             String    @unique(map: "User_teacher_id_key") @map("teacher_id")
+  name                  String?
+  email                 String    @unique(map: "User_email_key")
+  password              String
+  msAccessToken         String?   @map("ms_access_token") @db.Text
+  msRefreshToken        String?   @map("ms_refresh_token") @db.Text
+  msAccessTokenExpireOn DateTime? @map("ms_access_token_expire_on")
+  accessToken           String?   @map("access_token") @db.Text
+  msAccountInfo         String?   @map("ms_account_info") @db.Text
+  todayEmailSentCount   Int       @default(0) @map("today_email_sent_count")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime? @updatedAt @map("updated_at")
+
+  createEventQueue CreateEventQueue[]
+  msGraphApiLog    MsGraphApiLog[]
+
+  @@map("user")
+}
+
+model CreateEventQueue {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  classId       String    @map("class_id")
+  studySchedule String    @map("study_schedule") @db.Text
+  attendeeSize  Int       @map("attendee_size")
+  status        JobStatus @default(STALE)
+  retryCount    Int       @default(0) @map("retry_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "create_event_queue_user_id_fkey")
+  @@map("create_event_queue")
+}
+
+model MsGraphApiLog {
+  id             String       @id @default(uuid())
+  method         HttpMethod
+  requestUrl     String       @map("request_url") @db.MediumText
+  requestBody    String?      @map("request_body") @db.Text
+  responseStatus Int          @map("repsonse_status")
+  responseBody   String?      @map("response_body") @db.Text
+  type           ResponseType
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "ms_graph_api_log_user_id_fkey")
+  @@map("ms_graph_api_log")
+}
+
+enum JobStatus {
+  STALE
+  PENDING
+  SUCCESS
+  FAIL
+}
+
+enum ResponseType {
+  SUCCESS
+  ERROR
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}

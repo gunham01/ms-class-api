@@ -1,14 +1,33 @@
 class Semester {
+  /**
+   * @type {string}
+   */
   id;
+
+  /**
+   * @type {string}
+   */
   name;
+
+  /**
+   * @type {Date}
+   */
   startDate;
+
+  /**
+   * @type {boolean}
+   */
   isActive;
 
-  constructor({ id, name, startDate, isActive }) {
+  /**
+   *
+   * @param {Required<Omit<Semester, 'isActive'>> & {isActive?: boolean}} param0
+   */
+  constructor({ id, name, startDate, isActive}) {
     this.id = id;
     this.name = name;
     this.startDate = startDate;
-    this.isActive = !!isActive;
+    this.isActive = isActive ?? false;
   }
 }
 

@@ -1,14 +1,45 @@
-const { HttpResponse, HttpStatus } = require("../model/http-response.model");
-const api = require("../ms_graph_api");
-const _ = require("lodash");
-const { UserRepository } = require("../repository/user.repository");
+const { HttpResponse, HttpStatus } = require('../model/http-response.model');
+const { UserRepository } = require('../repository/user.repository');
+const { msTeamService } = require('../service/ms-teams/ms-teams.service');
+const clientConstant = require('../constant/client.constant');
+const { BaseController } = require('./base.controller');
+const { createEventQueue } = require('../queue/create-event.queue');
+const { DAILY_EMAIL_LIMIT } = require('../constant/ms-team.constant');
+const { msTokenService } = require('../service/ms-teams/ms-token.service');
+const { Logger } = require('../utils/logger.utils');
+const { PromiseUtils } = require('../utils/promise.utils');
 
-class MsteamsController {
+/**
+ * @typedef {import("../model/student.model").Student} Student
+ * @typedef {import("express").Request} Request
+ * @typedef {import("express").Response} Response
+ */
+
+class MsteamsController extends BaseController {
   _userRepository = new UserRepository();
 
+  /**
+   * @param {Request} req
+   */
+  async getProfile(req) {
+    try {
+      const { token } = req.body;
+      return msTeamService.getProfile(token);
+    } catch (error) {
+      Logger.logError(error, {
+        message: 'Lỗi khi lấy thông tin người dùng:',
+      });
+    }
+  }
+
+  /**
+   * @public
+   * @param {Request} req
+   * @returns {Promise<HttpResponse>}
+   */
   async signIn(req) {
     const params = {
-      scopes: process.env.OAUTH_SCOPES.split(","),
+      scopes: process.env.OAUTH_SCOPES.split(' '),
       redirectUri: process.env.OAUTH_REDIRECT_URI,
     };
 
@@ -16,105 +47,188 @@ class MsteamsController {
       const authUrl = await req.app.locals.msalClient.getAuthCodeUrl(params);
       return HttpResponse.status(HttpStatus.OK).body(authUrl);
     } catch (error) {
-      return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(`Error: ${error}`);
+      Logger.logError(error, { message: 'Lỗi khi đăng nhập MS Teasm:' });
+      return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+        `Error: ${error}`
+      );
     }
   }
 
+  /**
+   * @public
+   * @param {Request} req
+   * @param {Response} res
+   */
   async callBack(req, res) {
-    const tokenRequest = {
-      code: req.query.code,
-      scopes: process.env.OAUTH_SCOPES.split(","),
-      redirectUri: process.env.OAUTH_REDIRECT_URI,
-    };
-
     try {
-      const response = await req.app.locals.msalClient.acquireTokenByCode(tokenRequest);
-      res.redirect(`${process.env.USER_UI_URL}?code=${response.accessToken}&email=${response.account.username}`);
-    } catch (error) {
-      console.log("Lỗi khi call back signin: ", error);
-      res.redirect(`${process.env.USER_UI_URL}?error=true`);
-    }
-  }
-
-  async createClass(token, displayName, description) {
-    try {
-      let payloadClass = {
-        "template@odata.bind": "https://graph.microsoft.com/v1.0/teamsTemplates('standard')",
-        displayName: displayName,
-        description: description,
-      }
-
-      await api.createClass(token, payloadClass);
-      return true;
-    } catch (error) {
-      console.log(`Lỗi khi tạo lớp với tên ${displayName} và mô tả ${description}: `, error);
-      return false;
-    }
-  }
-
-  async getClassId(token, className) {
-    try {
-      const response = await api.getListClass(token);
-      let classInfo = _.find(response.data.value, ["displayName", className]);
-      return classInfo.id;
-    } catch (error) {
-      console.log(`Lỗi khi lấy ID của lớp ${className}: `, error);
-      return false;
-    }
-  }
-
-  async addMember(token, classId, users) {
-    try {
-      let listMember = [];
-
-      users.forEach((user) => {
-        listMember.push({
-          "@odata.type": "microsoft.graph.aadUserConversationMember",
-          roles: ["member"],
-          "user@odata.bind": "https://graph.microsoft.com/v1.0/users('" + user + "')",
+      const { accessToken, accessTokenExpireOn, refreshToken, account } =
+        await msTokenService.aquireTokenByCode({
+          code: req.query.code,
+          redirectUri: process.env.OAUTH_REDIRECT_URI,
         });
+      await this._userRepository.updateMsInfo(account.username, {
+        msAccessToken: accessToken,
+        msRefreshToken: refreshToken,
+        msAccessTokenExpireOn: accessTokenExpireOn,
+        accountInfo: account,
       });
-
-      let payloadMember = {
-        values: listMember,
-      };
-      await api.addMember(token, payloadMember, classId);
-
-      return true;
+      return res.redirect(
+        `${clientConstant.getClientUrl()}?code=${accessToken}&email=${
+          account.username
+        }`
+      );
+      // res.redirect('https://google.com');
     } catch (error) {
-      console.log(`Lỗi khi thêm sinh viên lớp với ID ${classId}: `, error);
-      return false;
+      Logger.logError(error, { message: 'Lỗi trong hàm callback:' });
+      return res.redirect(`${clientConstant.getClientUrl()}?error=true`);
+      // res.redirect('https://youtube.com');
     }
   }
 
+  /**
+   * @public
+   * @param {Request} req
+   */
   async createClasses(req) {
     try {
-      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-      const { token, data } = req.body;
-
-      for (const _class of data) {
-        // Kiểm tra xem lớp đã tồn tại hay chưa
-        let classId = await this.getClassId(token, _class.displayName);
-        if (classId) {
-          return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(`Nhóm lớp đã tồn tại`);
+      const { data } = req.body;
+      const currentUserEmail = req['user'].email;
+      const msToken = await this.getMsToken(currentUserEmail);
+      const allClasses = await msTeamService.getAllClass(msToken);
+      for (const creatingClass of data) {
+        if (process.env.ENV === 'dev') {
+          creatingClass.hasOnlineMeeting = true;
         }
 
-        let classIsCreated = await this.createClass(token, _class.displayName, _class.description);
-        if (!classIsCreated) {
-          return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(`Tạo nhóm lớp thất bại`);
+        const isClassExisted = allClasses.some(
+          (item) => item.displayName === creatingClass.displayName
+        );
+
+        if (isClassExisted) {
+          return HttpResponse.status(HttpStatus.CONFLICT).body(
+            `Nhóm lớp đã tồn tại`
+          );
         }
 
-        await delay(1000);
-        classId = await this.getClassId(token, _class.displayName);
-        if (!classId) continue;
+        const classId = await msTeamService.createClass({
+          token: msToken,
+          ...creatingClass,
+        });
+        await msTeamService.addStudentToClass({
+          token: msToken,
+          classId,
+          students: creatingClass.students.value,
+        });
 
-        await this.addMember(token, classId, _class.users);
+        if (creatingClass.hasOnlineMeeting) {
+          await this.addCreatingClassEventsToQueue(creatingClass, {
+            msClassId: classId,
+            organizerEmail: currentUserEmail,
+          });
+        }
       }
 
-      return HttpResponse.status(HttpStatus.OK).body("Thành công");
+      return HttpResponse.status(HttpStatus.OK).body();
     } catch (error) {
-      return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(`Error: ${error}`);
+      Logger.logError(error, { message: 'Lỗi khi tạo các lớp học:' });
+
+      const errorInfo = error.response?.data.error;
+      if (
+        ['InvalidAuthenticationToken', 'Unauthorized'].includes(errorInfo?.code)
+      ) {
+        return HttpResponse.status(HttpStatus.FORBIDDEN).body();
+      }
+
+      if (error instanceof HttpResponse) {
+        return error;
+      }
+
+      return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+        errorInfo ?? error
+      );
     }
+  }
+
+  /**
+   * @param {string} userEmail
+   */
+  async getMsToken(userEmail) {
+    const user = await this._userRepository.getByEmail(userEmail);
+    return user.msAccessToken;
+  }
+
+  /**
+   *
+   * @param {object} creatingClass
+   * @param {{ msClassId: string, organizerEmail: string }} param1
+   */
+  async addCreatingClassEventsToQueue(creatingClass, { msClassId, organizerEmail }) {
+    const user = await this._userRepository.getByEmail(organizerEmail);
+
+    await createEventQueue.add({
+      classId: msClassId,
+      creatingClass,
+      userId: user.id,
+    });
+  }
+
+  /**
+   *
+   * @param {import('express').Request} req
+   */
+  async cancelAllClassEvents(req) {
+    const { email: userEmail, classId } = req.body;
+    const currentUser = await this._userRepository.getByEmail(userEmail);
+    const msToken = currentUser.msAccessToken;
+    let { todayEmailSentCount } = currentUser;
+    let totalEmailSent = 0;
+    let currentFetchedEvents = [];
+    let [success, fail] = [0, 0];
+    let page = 1;
+
+    do {
+      try {
+        currentFetchedEvents = await msTeamService.getTeamAllEvents({
+          msToken,
+          page: page++,
+          teamId: classId,
+        });
+      } catch (error) {
+        const errorLog = Logger.logError(error, {
+          message: 'Lỗi khi lấy tất cả event:',
+        });
+        return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+          errorLog
+        );
+      }
+      for (const { id, attendees } of currentFetchedEvents) {
+        const attendeesSize = attendees.length;
+        console.log('attendeesSize:', attendeesSize);
+        if (todayEmailSentCount + attendeesSize >= DAILY_EMAIL_LIMIT) {
+          continue;
+        }
+
+        await PromiseUtils.delay(1500);
+        try {
+          await msTeamService.cancelTeamEvent({
+            msToken: currentUser.msAccessToken,
+            teamId: classId,
+            eventId: id,
+          });
+          success++;
+          todayEmailSentCount += attendeesSize;
+          totalEmailSent += attendeesSize;
+        } catch (error) {
+          fail++;
+        }
+      }
+    } while (currentFetchedEvents.length > 0);
+
+    await this._userRepository.setEmailCounter(
+      currentUser.id,
+      todayEmailSentCount
+    );
+    return HttpResponse.ok({ success, fail, totalEmailSent });
   }
 }
 

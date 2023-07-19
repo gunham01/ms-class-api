@@ -1,80 +1,68 @@
-let createError = require("http-errors");
-let express = require("express");
-let path = require("path");
-let cookieParser = require("cookie-parser");
-let logger = require("morgan");
-const msal = require("@azure/msal-node");
-const helmet = require("helmet");
-const cors = require("cors");
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const cors = require('cors');
 
-const { vnuaRouter } = require("./routes/vnua.routing");
+const { vnuaRouter } = require('./routes/vnua.routing');
 const msteamRouter = require('./routes/msteams.routing');
-const { authenticationRouter } = require("./routes/auth.routing");
+const { authenticationRouter } = require('./routes/auth.routing');
+const { msalClient } = require('./graph');
+require('./cronjob');
 
-let app = express();
-
-// MSAL config
-const msalConfig = {
-  auth: {
-    clientId: process.env.OAUTH_CLIENT_ID,
-    authority: process.env.OAUTH_AUTHORITY,
-    clientSecret: process.env.OAUTH_CLIENT_SECRET
-  },
-  system: {
-    loggerOptions: {
-      loggerCallback(loglevel, message, containsPii) {
-        console.log(message);
-      },
-      piiLoggingEnabled: false,
-      logLevel: msal.LogLevel.Verbose,
-    }
-  }
-};
+const app = express();
+/**
+ * @typedef {express.Request} Request
+ * @typedef {express.Response} Response
+ * @typedef {express.NextFunction} NextFunction
+ */
 
 // Create msal application object
-app.locals.msalClient = new msal.ConfidentialClientApplication(msalConfig);
+// @ts-ignore
+app.locals.msalClient = msalClient;
 
 function handleError() {
-  return (err, res, req, next) => {
+  return (err, req, res, next) => {
     console.error(err);
-    res.status(500).send("Có lỗi xảy ra");
+    res.status(500).send('Có lỗi xảy ra');
   };
 }
 
-app.use(logger("dev"));
+app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
-app.use(helmet());
 
 /**
  * Routing
  */
-app.use("/api/vnua", vnuaRouter);
-app.use("/api/msteam", msteamRouter);
-app.use("/api/auth", authenticationRouter);
+app.use('/api/vnua', vnuaRouter);
+app.use('/api/msteam', msteamRouter);
+app.use('/api/auth', authenticationRouter);
 
 // catch 404 and forward to error handler
-app.use((req, res, next) => {
+app.use((_req, _res, next) => {
   next(createError(404));
 });
 
 app.use(handleError);
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use((err, req, res, _next) => {
+  console.error(err);
   // set locals, only providing error in development
   res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
   res.status(err.status || 500).send(err);
   // res.render("error");
 });
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', (err) => {
   console.log('Uncaught exception: ' + err);
 });
 

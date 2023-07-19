@@ -14,7 +14,6 @@ class WebElementController {
    */
   async getAcceptMessageIfExistAndAcceptIt() {
     const alert = await this.getAlert();
-
     if (alert) {
       const alertMessage = await alert.getText();
       alert.accept();
@@ -41,8 +40,8 @@ class WebElementController {
    * @param {string} id ID của HTML element
    * @param {number} timeOutInSeconds timeout theo giây
    */
-  getElementById(id, timeOutInSeconds) {
-    if (timeOutInSeconds && timeOutInSeconds > 0) {
+  getElementById(id, timeOutInSeconds = 0) {
+    if (timeOutInSeconds > 0) {
       return this.waitElementPresence(id, timeOutInSeconds);
     }
 
@@ -54,7 +53,7 @@ class WebElementController {
    * @param {string} id ID của HTML element cần đợi
    * @param {number} timeOutInSeconds thời gian đợi tối đa
    */
-  async waitElementPresence(id, timeOutInSeconds) {
+  async waitElementPresence(id, timeOutInSeconds = 0) {
     const desiredElement = await this._driver.findElement(By.id(id));
     return await this._driver.wait(until.elementIsVisible(desiredElement), timeOutInSeconds);
   }

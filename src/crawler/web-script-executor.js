@@ -20,7 +20,7 @@ class WebScriptExecutor {
 
   /**
    * Chạy script
-   * @param {string} scriptLocation nơi để script
+   * @param {string} scriptContent nơi để script
    */
   async executeScriptRaw(scriptContent) {
     return this._driver.executeScript(scriptContent);
@@ -32,8 +32,8 @@ class WebScriptExecutor {
    * @param {number} timeOutInSeconds thời hạn theo đơn vị giây
    * @returns
    */
-  async executeScriptAsync(scriptLocation, timeOutInSeconds) {
-    if (timeOutInSeconds && timeOutInSeconds > 0) {
+  async executeScriptAsync(scriptLocation, timeOutInSeconds = 0) {
+    if (timeOutInSeconds > 0) {
       const timeOuts = await this._driver.manage().getTimeouts();
       this._driver.manage().setTimeouts({ ...timeOuts, ...{ script: timeOutInSeconds * 1000 } });
     }

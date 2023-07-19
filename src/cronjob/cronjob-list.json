@@ -1,0 +1,11 @@
+{
+  "createEventQueue": {
+    "name": "event-queue:create",
+    "pattern": "0 */1 * * *"
+  },
+  "resetDailyLimit": {
+    "name": "daily-limit:reset",
+    "pattern": "0 0 * * *",
+    "lastRunAt": "2023-07-18T05:04:12.685Z"
+  }
+}

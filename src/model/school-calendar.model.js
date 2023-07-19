@@ -1,16 +1,34 @@
 class SchoolCalendar {
+  /**
+   * @type {number}
+   */
   id;
-  teacherId;
-  semesterId;
-  createdAt = new Date();
-  updatedAt = new Date();
-  msClassId;
 
-  constructor({ teacherId, semesterId, createdAt, msClassId}) {
+  /**
+   * @type {string}
+   */
+  teacherId;
+
+  /**
+   * @type {string}
+   */
+  semesterId;
+
+  /**
+   * @type {Date}
+   */
+  createdAt = new Date();
+  
+  /**
+   * @type {Date}
+   */
+  updatedAt = new Date();
+
+  constructor({ teacherId, semesterId, createdAt = new Date()}) {
     this.teacherId = teacherId;
     this.semesterId = semesterId;
-    this.createdAt = createdAt ? createdAt : new Date();
-    this.msClassId = msClassId;
+    this.createdAt = createdAt;
+    this.updatedAt = new Date();
   }
 }
 

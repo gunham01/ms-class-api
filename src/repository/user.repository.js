@@ -1,70 +1,162 @@
-const { User } = require("../model/user.model.js");
-const { BaseRepository } = require("./base.repository.js");
+const Prisma = require('../database/prisma.database.js');
+const { User } = require('../model/user.model.js');
 
-class UserRepository extends BaseRepository {
-  constructor() {
-    super();
-  }
-
+class UserRepository {
   /**
    * @param {User} user
    */
   async insert(user) {
-    return this.query(
-      "INSERT INTO user (teacher_id, email, password, ms_access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-      user.teacherId,
-      user.email,
-      user.password,
-      user.msAccessToken,
-      new Date(),
-      new Date()
-    );
+    return Prisma.user.create({
+      data: user,
+    });
   }
 
-  async existedByEmail(email) {
-    const existedTeachers = await this.getByEmail(email);
-    return existedTeachers.length > 0;
+  getAll() {
+    return Prisma.user.findMany();
   }
 
-  updatePasswordByEmail(email, password) {
-    return this.query("UPDATE user SET password = ? WHERE email = ?", password, email);
-  }
-
-  markUserWithEmailJustLogedIn(email) {
-    return this.query("UPDATE user SET last_login_at = ? WHERE email = ?", new Date(Date.now()), email);
+  async getAllUserIds() {
+    const users = await Prisma.user.findMany({
+      select: {
+        id: true,
+      },
+    });
+    return users.map(({ id }) => id);
   }
 
   /**
    *
-   * @param email mã giảng viên
-   * @param userNewAccessToken access token mới của giảng viên này
+   * @param {string} email
+   * @returns {Promise<boolean>}
    */
-  updateMSAccessTokenByEmail(email, userNewAccessToken) {
-    return this.query("UPDATE user SET ms_access_token = ? WHERE email = ?", userNewAccessToken, email);
-  }
-
-  async getUserLastLoginTimeByUserEmail(email) {
-    return (await this.query("SELECT last_login_at AS lastLoginAt FROM user WHERE email = ?", email))[0].lastLoginAt;
+  async existedByEmail(email) {
+    return (
+      (await Prisma.user.count({
+        where: {
+          email,
+        },
+      })) > 0
+    );
   }
 
   /**
+   *
+   * @param {string} teacherId
+   * @returns {Promise<boolean>}
+   */
+  async existedByTeacherId(teacherId) {
+    return (
+      (await Prisma.user.count({
+        where: {
+          teacherId,
+        },
+      })) > 0
+    );
+  }
+
+  /**
+   * @public
    * @param {string} email
    */
-
   getByEmail(email) {
-    return this.query("SELECT * FROM user WHERE email = ?", email);
+    return Prisma.user.findUnique({
+      where: { email },
+    });
   }
 
+  /**
+   * @public
+   * @param {string} msToken
+   */
+  getByMsToken(msToken) {
+    return Prisma.user.findFirstOrThrow({
+      where: { msAccessToken: msToken },
+    });
+  }
+
+  /**
+   * @public
+   * @param {string} teacherId
+   */
   getByTeacherId(teacherId) {
-    return this.query("SELECT * FROM user WHERE teacher_id = ?", teacherId);
+    return Prisma.user.findFirstOrThrow({
+      where: { teacherId },
+    });
   }
 
-  getById(id) {
-    return this.query("SELECT * FROM user WHERE id = ?", id);
+  /**
+   * @public
+   * @param {string} userUsername
+   * @param {string} token
+   */
+  updateAccessToken(userUsername, token) {
+    return Prisma.user.update({
+      where: {
+        email: userUsername,
+      },
+      data: {
+        accessToken: token,
+      },
+    });
+  }
+  /**
+   * @public
+   * @param {string} userEmail
+   * @param {{
+   *  msAccessToken?: string,
+   *  msRefreshToken?: string,
+   *  msAccessTokenExpireOn?: Date,
+   *  accountInfo?: import('@azure/msal-common').AccountInfo
+   * }} param0
+   */
+  updateMsInfo(
+    userEmail,
+    { msAccessToken, msRefreshToken, msAccessTokenExpireOn, accountInfo }
+  ) {
+    return Prisma.user.update({
+      where: {
+        email: userEmail,
+      },
+      data: {
+        name: accountInfo?.name,
+        msAccessToken,
+        msRefreshToken,
+        msAccessTokenExpireOn,
+        msAccountInfo: JSON.stringify(accountInfo),
+      },
+    });
   }
 
-  getAllUsers() {
-    return this.query("SELECT * FROM user");
+  async isJwtExisted(jwt) {
+    const userWithJwtCount = await Prisma.user.count({
+      where: {
+        accessToken: jwt,
+      },
+    });
+    return userWithJwtCount > 0;
+  }
+
+  resetAllCounter() {
+    return Prisma.user.updateMany({
+      data: {
+        todayEmailSentCount: 0,
+      },
+    });
+  }
+
+  /**
+   * @param {string} id
+   * @param {number} quantity
+   */
+  setEmailCounter(id, quantity) {
+    return Prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        todayEmailSentCount: quantity,
+      },
+    });
   }
 }
 

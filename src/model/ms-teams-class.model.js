@@ -1,6 +1,17 @@
 class MsTeamsClass {
+  /**
+   * @type {string}
+   */
   id;
+
+  /**
+   * @type {string}
+   */
   displayName;
+
+  /**
+   * @type {string}
+   */
   description;
 
   constructor({ id, displayName, description }) {

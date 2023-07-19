@@ -1,10 +1,11 @@
-const express = require("express");
-const { ControllerFactory } = require("../controller/controller-factory");
-const { RouterUtils } = require("./utils/router.utils");
+const express = require('express');
+const { ControllerFactory } = require('../controller/controller-factory');
+const { RouterUtils } = require('./utils/router.utils');
+const clientConstant = require('../constant/client.constant');
 
 const authenticationRouter = express.Router();
-authenticationRouter.post("/app-login", login);
-authenticationRouter.post("/register", register);
+authenticationRouter.post('/app-login', login);
+authenticationRouter.post('/register', register);
 
 /**
  * @param {express.Request} request
@@ -12,10 +13,16 @@ authenticationRouter.post("/register", register);
  */
 async function login(request, response) {
   const { email, password } = request.body;
-  const serverAuthenticationResponse = await ControllerFactory.userController.authenticate(email, password);
+  const serverAuthenticationResponse =
+    await ControllerFactory.userController.authenticate(email, password);
   if (serverAuthenticationResponse.body.msLoginRequire) {
-    const msLoginUrlResponse = await ControllerFactory.msteamsController.signIn(request)
+    const msLoginUrlResponse = await ControllerFactory.msteamsController.signIn(
+      request
+    );
     serverAuthenticationResponse.body.msLoginUrl = msLoginUrlResponse.body;
+  }
+  if (serverAuthenticationResponse.good) {
+    clientConstant.setClientUrl(request.headers.origin);
   }
 
   RouterUtils.response(response, serverAuthenticationResponse);
@@ -27,7 +34,9 @@ async function login(request, response) {
  */
 async function register(request, response) {
   const user = request.body;
-  const serverRegisterResponse = await ControllerFactory.userController.insert(user);
+  const serverRegisterResponse = await ControllerFactory.userController.insert(
+    user
+  );
   RouterUtils.response(response, serverRegisterResponse);
 }
 

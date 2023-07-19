@@ -1,31 +1,51 @@
-const { SchoolWebSchedule } = require("../model/school-web-schedule.model");
-const { CryptoUtils, HashAlgorithm } = require("../utils/crypto.utils");
-const { ChromeWebCrawler } = require("./chrome.web-crawler");
-const { SchoolScheduleHelpler } = require("./school-schedule.helpler");
+const { SchoolWebSchedule } = require('../model/school-web-schedule.model');
+const { CryptoUtils } = require('../utils/crypto.utils');
+const { ChromeWebCrawler } = require('./chrome.web-crawler');
+const { SchoolScheduleHelpler } = require('./school-schedule.helpler');
+const { WebCrawler } = require('./web-crawler');
+const { SchoolWebEvent } = require('../model/school-web-event.model');
+const moment = require('moment');
+const { Logger } = require('../utils/logger.utils');
 
 class TeacherScheduleProvider {
-  static _webScheduleUrlPrefix = "http://daotao.vnua.edu.vn/default.aspx?page=thoikhoabieu&sta=1&id=";
-  static _resourceLocations = {
-    myJquery: "./src/resource/js/MyJQuery.js",
-    captcha: "./src/resource/js/captcha.js",
-    readSchedule: "./src/resource/js/readSchedule.js",
-    readStudentList: "./src/resource/js/readStudentList.js",
+  /**
+   * @private
+   */
+  static webScheduleUrlPrefix =
+    'http://daotao.vnua.edu.vn/default.aspx?page=thoikhoabieu&sta=1&id=';
+
+  /**
+   * @private
+   */
+  static resourceLocations = {
+    myJquery: './src/resource/js/MyJQuery.js',
+    captcha: './src/resource/js/captcha.js',
+    readSchedule: './src/resource/js/readSchedule.js',
+    readStudentList: './src/resource/js/readStudentList.js',
+    readSemesterStartDate: './src/resource/js/readSemesterStartDate.js',
   };
 
+  /**
+   * @private
+   * @type {WebCrawler}
+   */
+  webCrawler;
+
   constructor() {
-    this._webCrawler = null;
+    this.webCrawler = null;
   }
 
   /**
-   * Lấy lịch giảng dạy của giảng viên trong trang đào tạo
+   * @public Lấy lịch giảng dạy của giảng viên trong trang đào tạo
    * @param { string } teacherId: mã giảng viên
    * @param { string } semesterId: mã học kỳ
-   * @returns lịch giảng dạy
+   * @returns {Promise<SchoolWebSchedule>} lịch giảng dạy
    */
   async getSchedule(teacherId, semesterId) {
     await this.initialize(teacherId, semesterId);
     const teachingEvents = await this.getTeachingEvents();
-    await this._webCrawler.close();
+
+    await this.webCrawler.close();
 
     return new SchoolWebSchedule({
       teacherId: teacherId,
@@ -36,99 +56,152 @@ class TeacherScheduleProvider {
   }
 
   /**
-   * Băm các sự kiện giảng dạy
-   * @param {any[]} teachingEvents các sự kiện giảng dạy
+   * @private Băm các sự kiện giảng dạy
+   * @param teachingEvents các sự kiện giảng dạy
+   * @returns {string}
    */
   hashTeachingEvents(teachingEvents) {
-    return CryptoUtils.createHash(JSON.stringify(teachingEvents), HashAlgorithm.SHA256);
+    return CryptoUtils.createHash(JSON.stringify(teachingEvents), 'sha256');
   }
 
   /**
-   * Khởi tạo mọi thứ
+   * @private Khởi tạo mọi thứ
    * @param {string} teacherId mã giảng viên
    * @param {string} semesterId mã học kỳ
    */
   async initialize(teacherId, semesterId) {
-    this._webCrawler = await ChromeWebCrawler.initialize();
+    this.webCrawler = await ChromeWebCrawler.initialize();
     await this.navigateToTeacherWebSchedule(teacherId);
-
     await this.prepareToReadTeachingEvents(teacherId, semesterId);
   }
 
   /**
-   * Chuẩn bị để đọc lịch
+   * @private Chuẩn bị để đọc lịch
    * @param {string} semesterId mã học kỳ
    */
   async prepareToReadTeachingEvents(teacherId, semesterId) {
     try {
-      await new SchoolScheduleHelpler(this._webCrawler).prepareToReadTeachingEvents(teacherId, semesterId);
+      await new SchoolScheduleHelpler(
+        this.webCrawler
+      ).prepareToReadTeachingEvents(teacherId, semesterId);
     } catch (error) {
-      await this._webCrawler.close();
+      await this.webCrawler.close();
       throw error;
     }
   }
 
   /**
+   * @private
    * @param {string} teacherId
    */
   async navigateToTeacherWebSchedule(teacherId) {
     const currentTeacherScheduleUrl = this.getWebScheduleUrl(teacherId);
-    await this._webCrawler.navigateTo(currentTeacherScheduleUrl);
+    await this.webCrawler.navigateTo(currentTeacherScheduleUrl);
   }
 
   /**
+   * @private
    * @param {string} teacherId
+   * @returns {string}
    */
   getWebScheduleUrl(teacherId) {
-    return `${TeacherScheduleProvider._webScheduleUrlPrefix}${teacherId}`;
+    return `${TeacherScheduleProvider.webScheduleUrlPrefix}${teacherId}`;
   }
 
+  /**
+   * @private Đọc lịch từ web đào tạo và xử lý
+   * @returns {Promise<SchoolWebEvent[]>}
+   */
   async getTeachingEvents() {
+    const semester = await this.readSemester();
+
     let teachingEvents = await this.readScheduleOnWeb();
-    teachingEvents = await this.getStudentsOfTeachingEvents(teachingEvents);
+    await this.getStudentsOfTeachingEvents(teachingEvents);
+    teachingEvents = teachingEvents
+      .filter((event) => event.students.value.length !== 0)
+      .map((event) => ({ ...event, semester }));
+
     return teachingEvents;
   }
 
   /**
-   * Đọc lịch giảng dạy
+   * @private Đọc lịch giảng dạy
    * @returns lịch giảng dạy
    */
   async readScheduleOnWeb() {
     try {
-      return this._webCrawler.scriptExecutor.executeScript(TeacherScheduleProvider._resourceLocations.readSchedule);
+      return this.webCrawler.scriptExecutor.executeScript(
+        TeacherScheduleProvider.resourceLocations.readSchedule
+      );
     } catch (error) {
-      await this._webCrawler.close();
-      console.error("error when reading schedule: ", error);
-      throw new Error("Lỗi khi đọc thời khóa biểu");
+      await this.webCrawler.close();
+      console.error('error when reading schedule: ', error);
+      throw new Error('Lỗi khi đọc thời khóa biểu');
+    }
+  }
+
+  async readSemester() {
+    try {
+      const { index, startDateStr, startYear, endYear } =
+        await this.webCrawler.scriptExecutor.executeScript(
+          TeacherScheduleProvider.resourceLocations.readSemesterStartDate
+        );
+      return {
+        index,
+        startDate: moment(startDateStr, 'DD/MM/YYYY').toDate(),
+        startYear,
+        endYear,
+      };
+    } catch (error) {
+      await this.webCrawler.close();
+      throw new Error('Lỗi khi thông tin học kỳ hiện tại');
     }
   }
 
   /**
-   * Thêm danh sách sinh viên vào các sự kiện giảng dạy
-   * @param teachingEvents các sự kiện giảng dạy
-   * @returns các sự kiện giảng dạy đi kèm với danh sách sinh viên tương ứng
+   * @private Thêm danh sách sinh viên vào các sự kiện giảng dạy
+   * @param {SchoolWebEvent[]} teachingEvents các sự kiện giảng dạy
+   * @returns {Promise<void>} các sự kiện giảng dạy đi kèm với danh sách sinh viên tương ứng
    */
   async getStudentsOfTeachingEvents(teachingEvents) {
     for (const event of teachingEvents) {
       event.students.value = await this.readStudentList(event.students.listUrl);
+      for (const occurrence of event.occurrences) {
+        if (!occurrence.practiceGroup) {
+          occurrence.students = event.students;
+        } else {
+          const existingOccurrenceWithSamePracticeGroup =
+            event.occurrences.find(
+              (item) => item.practiceGroup === occurrence.practiceGroup
+            );
+          if (existingOccurrenceWithSamePracticeGroup?.students.value) {
+            occurrence.students.value =
+              existingOccurrenceWithSamePracticeGroup.students.value;
+          } else {
+            occurrence.students.value = await this.readStudentList(
+              occurrence.students.listUrl
+            );
+          }
+        }
+      }
     }
-
-    return teachingEvents;
   }
 
   /**
-   * Đọc danh sách sinh viên từ link
+   * @private Đọc danh sách sinh viên từ link
    * @param {string} studentListUrl link danh sách sinh viên
    * @returns danh sách sinh viên
    */
   async readStudentList(studentListUrl) {
-    await this._webCrawler.navigateTo(studentListUrl);
+    await this.webCrawler.navigateTo(studentListUrl);
     try {
-      return this._webCrawler.scriptExecutor.executeScript(TeacherScheduleProvider._resourceLocations.readStudentList);
+      return this.webCrawler.scriptExecutor.executeScript(
+        TeacherScheduleProvider.resourceLocations.readStudentList
+      );
     } catch (error) {
-      await this._webCrawler.close();
-      console.error("error when reading student list: ", error);
-      throw new Error("Lỗi khi đọc danh sách sinh viên");
+      await this.webCrawler.close();
+      console.error('error when reading student list: ', error);
+      throw new Error('Lỗi khi đọc danh sách sinh viên');
     }
   }
 }

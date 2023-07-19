@@ -1,5 +1,12 @@
 class Student {
+  /**
+   * @type {string}
+   */
   id;
+
+  /**
+   * @type {string}
+   */
   name;
 }
 

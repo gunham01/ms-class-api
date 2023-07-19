@@ -9,14 +9,15 @@ class SemesterProvider {
   _semesterDropdownListHTMLId = "ctl00_ContentPlaceHolder1_ctl00_ddlChonNHHK";
   _textContainsSemesterStartDateElementId = "ctl00_ContentPlaceHolder1_ctl00_lblNote";
 
+  /**
+   * @public
+   * @returns {Promise<Semester[]>}
+   */
   async getSemesters() {
     try {
       await this.prepareToReadSemesters();
-      console.log("Prepare done");
       let semesters = await this.readSemestersFromWeb();
-      console.log("Read semesters done");
       await this._webCrawler.close();
-      console.log("Closed and quited");
       return this.setActiveSemesterIn(semesters);
     } catch (error) {
       // console.log("Error when read semesters: ", error);
@@ -24,6 +25,9 @@ class SemesterProvider {
     }
   }
 
+  /**
+   * @private
+   */
   async prepareToReadSemesters() {
     this._webCrawler = await ChromeWebCrawler.initialize();
 
@@ -37,6 +41,9 @@ class SemesterProvider {
     }
   }
 
+  /**
+   * @private lấy các thẻ options để chọn học kỳ
+   */
   async getSemesterHTMLOptions() {
     const semesterDropdownList = await this._webCrawler.elementController.waitElementPresence(
       this._semesterDropdownListHTMLId
@@ -45,6 +52,10 @@ class SemesterProvider {
     return await semesterDropdownList.findElements(By.css("option"));
   }
 
+  /**
+   * @private Lấy thông tin các học kỳ trên web
+   * @returns {Promise<Semester[]>}
+   */
   async readSemestersFromWeb() {
     let semesters = [];
     let fetchedSemesterCount = 0;
@@ -63,9 +74,7 @@ class SemesterProvider {
 
       if (fetchedSemesterCount < totalSemesterCount) {
         await semesterOptions[fetchedSemesterCount].click();
-        console.log("Click");
         await this._webCrawler.waitPageFinishesLoading();
-        console.log("Finished waiting");
       }
     } while (fetchedSemesterCount < totalSemesterCount);
 
@@ -73,6 +82,7 @@ class SemesterProvider {
   }
 
   /**
+   * @pirvate Lấy ra thông tin học kỳ từ thẻ option chọn học kỳ
    * @param {WebElement} semesterHTMLOption
    * @returns
    */
@@ -80,13 +90,19 @@ class SemesterProvider {
     const [name, id, semesterStartDate] = await Promise.all([
       semesterHTMLOption.getText(),
       semesterHTMLOption.getAttribute("value"),
+      this.getSemesterStartDate(),
     ]);
     return new Semester({
       id: id,
       name: name,
+      startDate: semesterStartDate,
     });
   }
 
+  /**
+   * @private
+   * @returns {Promise<Date>}
+   */
   async getSemesterStartDate() {
     const noteElement = await this._webCrawler.elementController.getElementById(
       this._textContainsSemesterStartDateElementId
@@ -96,6 +112,7 @@ class SemesterProvider {
   }
 
   /**
+   * @private
    * @param {Semester[]} semesters
    */
   setActiveSemesterIn(semesters) {
