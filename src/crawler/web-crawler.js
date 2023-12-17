@@ -5,7 +5,7 @@ const { WebScriptExecutor } = require("./web-script-executor");
 class WebCrawler {
   /**
    *
-   * @param {WebDriver}} webDriver
+   * @param {WebDriver} webDriver
    */
   constructor(webDriver) {
     this._driver = webDriver;
@@ -25,7 +25,6 @@ class WebCrawler {
    * @param {string} url
    */
   async navigateTo(url) {
-    // console.log("url: ", url);
     await this._driver.get(url);
   }
 

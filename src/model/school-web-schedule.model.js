@@ -8,7 +8,7 @@ class SchoolWebSchedule {
    */
   teacherId;
   /**
-   * @type {number}
+   * @type {string}
    */
   semesterId;
 
@@ -24,13 +24,10 @@ class SchoolWebSchedule {
 
   /**
    *
-   * @param {SchoolWebSchedule} param0
+   * @param {Required<SchoolWebSchedule>} init
    */
-  constructor({ teacherId, semesterId, events, scheduleHash }) {
-    this.teacherId = teacherId;
-    this.semesterId = semesterId;
-    this.events = events;
-    this.scheduleHash = scheduleHash;
+  constructor(init) {
+    Object.assign(this, init);
   }
 }
 

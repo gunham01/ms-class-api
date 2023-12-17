@@ -1,24 +1,28 @@
-const { User } = require("../model/user.model.js");
-const { BaseRepository } = require("./base.repository.js");
+const { Prisma } = require('.prisma/client');
+const prisma = require('../database/prisma.database.js');
+const { User } = require('../model/user.model.js');
 
-class UserRepository extends BaseRepository {
-  constructor() {
-    super();
-  }
-
+class UserRepository {
   /**
-   * @param {User} user
+   * @param {Prisma.UserCreateInput} user
    */
   async insert(user) {
-    return this.query(
-      "INSERT INTO user (teacher_id, email, password, ms_access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-      user.teacherId,
-      user.email,
-      user.password,
-      user.msAccessToken,
-      new Date(),
-      new Date()
-    );
+    return prisma.user.create({
+      data: user,
+    });
+  }
+
+  getAll() {
+    return prisma.user.findMany();
+  }
+
+  async getAllUserIds() {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+      },
+    });
+    return users.map(({ id }) => id);
   }
 
   /**
@@ -27,85 +31,143 @@ class UserRepository extends BaseRepository {
    * @returns {Promise<boolean>}
    */
   async existedByEmail(email) {
-    const existedTeachers = await this.getByEmail(email);
-    return existedTeachers.length > 0;
+    return (
+      (await prisma.user.count({
+        where: {
+          email,
+        },
+      })) > 0
+    );
   }
 
   /**
-   * 
-   * @param {string} teacherId 
+   *
+   * @param {string} teacherId
    * @returns {Promise<boolean>}
    */
   async existedByTeacherId(teacherId) {
-    const existedTeachers = await this.getByTeacherId(teacherId);
-    return existedTeachers.length > 0;
+    return (
+      (await prisma.user.count({
+        where: {
+          teacherId,
+        },
+      })) > 0
+    );
   }
 
-  /**
-   * @public
-   * @param {string} email 
-   * @param {string} password 
-   */
-  updatePasswordByEmail(email, password) {
-    return this.query("UPDATE user SET password = ? WHERE email = ?", password, email);
-  }
-
-  /**
-   * @public
-   * @param {string} email 
-   */ 
-  markUserWithEmailJustLogedIn(email) {
-    return this.query("UPDATE user SET last_login_at = ? WHERE email = ?", new Date(Date.now()), email);
-  }
-
-  /**
-   * @public
-   * @param {string} email mã giảng viên
-   * @param {string} userNewAccessToken access token mới của giảng viên này
-   */
-  updateMSAccessTokenByEmail(email, userNewAccessToken) {
-    return this.query("UPDATE user SET ms_access_token = ? WHERE email = ?", userNewAccessToken, email);
-  }
-
-  /**
-   * 
-   * @param {string} email 
-   * @returns {Promise<Date>}
-   */
-  async getUserLastLoginTimeByUserEmail(email) {
-    return (await this.query("SELECT last_login_at AS lastLoginAt FROM user WHERE email = ?", email))[0].lastLoginAt;
+  updateTeacherId(id, teacherId) {
+    return prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        teacherId
+      }
+    })
   }
 
   /**
    * @public
    * @param {string} email
    */
-
   getByEmail(email) {
-    return this.query("SELECT * FROM user WHERE email = ?", email);
+    return prisma.user.findUnique({
+      where: { email },
+    });
   }
 
   /**
    * @public
-   * @param {string} teacherId 
+   * @param {string} msToken
+   */
+  getByMsToken(msToken) {
+    return prisma.user.findFirstOrThrow({
+      where: { msAccessToken: msToken },
+    });
+  }
+
+  /**
+   * @public
+   * @param {string} teacherId
    */
   getByTeacherId(teacherId) {
-    return this.query("SELECT * FROM user WHERE teacher_id = ?", teacherId);
+    return prisma.user.findFirstOrThrow({
+      where: { teacherId },
+    });
   }
 
   /**
    * @public
-   * @param {string} id 
+   * @param {string} userUsername
+   * @param {string} token
    */
-  getById(id) {
-    return this.query("SELECT * FROM user WHERE id = ?", id);
+  updateAccessToken(userUsername, token) {
+    return prisma.user.update({
+      where: {
+        email: userUsername,
+      },
+      data: {
+        accessToken: token,
+      },
+    });
+  }
+  /**
+   * @public
+   * @param {string} userEmail
+   * @param {{
+   *  name: string
+   *  accessToken?: string,
+   *  refreshToken?: string,
+   *  accessTokenExpireOn?: Date,
+   * }} param0
+   */
+  updateMsInfo(
+    userEmail,
+    { name, accessToken, refreshToken, accessTokenExpireOn }
+  ) {
+    return prisma.user.update({
+      where: {
+        email: userEmail,
+      },
+      data: {
+        name,
+        msAccessToken: accessToken,
+        msRefreshToken: refreshToken,
+        msAccessTokenExpireOn: accessTokenExpireOn,
+      },
+    });
+  }
+
+  async isJwtExisted(jwt) {
+    const userWithJwtCount = await prisma.user.count({
+      where: {
+        accessToken: jwt,
+      },
+    });
+    return userWithJwtCount > 0;
+  }
+
+  resetAllCounter() {
+    return prisma.user.updateMany({
+      data: {
+        todayEmailSentCount: 0,
+      },
+    });
   }
 
   /**
-   * @public
+   * @param {string} id
+   * @param {number} quantity
    */
-  getAllUsers() {
-    return this.query("SELECT * FROM user");
+  setEmailCounter(id, quantity) {
+    return prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        todayEmailSentCount: quantity,
+      },
+    });
   }
 }
 

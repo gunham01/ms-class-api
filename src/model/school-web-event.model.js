@@ -1,3 +1,6 @@
+/**
+ *  Model cua lịch lấy từ trang Đào tạo
+ */
 class SchoolWebEvent {
   /**
    * @type {string}
@@ -10,7 +13,7 @@ class SchoolWebEvent {
   subjectName;
 
   /**
-   * @type {string}
+   * @type {number}
    */
   subjectGroup;
 
@@ -20,14 +23,32 @@ class SchoolWebEvent {
   credit;
 
   /**
-   * @type {number | undefined}
+   * @type {SchoolWebEventOccurrence[]}
    */
-  practiceGroup;
+  occurrences;
 
   /**
-   * @type {number}
+   * @typedef {import("./student.model").Student} Student
+   * @type {{listUrl: string, value: Student[]}}
    */
-  dayOfWeekIndex;
+  students;
+
+  /**
+   * @type {{index: number, startYear: number, endYear: number, startDate: Date}}
+   */
+  semester;
+
+  /**
+   * @type {boolean}
+   */
+  hasOnlineMeeting;
+}
+
+class SchoolWebEventOccurrence {
+  /**
+   * @type {number[]}
+   */
+  dayOfWeeks;
 
   /**
    * @type {number}
@@ -50,13 +71,18 @@ class SchoolWebEvent {
   location;
 
   /**
-   * @typedef {import("./student.model").Student} Student
-   * @typedef {{listUrl: string, value: Student[]}} StudentList
-   * @type {StudentList}
+   * @type {string | null}
+   */
+  practiceGroup;
+
+  /**
+   * @typedef {import('../model/student.model').Student} StudentModel
+   * @type {{listUrl: string, value: StudentModel[]}}
    */
   students;
 }
 
 module.exports = {
   SchoolWebEvent,
+  SchoolWebEventOccurrence
 };

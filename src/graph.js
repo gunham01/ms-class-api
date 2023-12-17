@@ -1,5 +1,6 @@
-let graph = require("@microsoft/microsoft-graph-client");
-require("isomorphic-fetch");
+let graph = require('@microsoft/microsoft-graph-client');
+require('isomorphic-fetch');
+const msal = require('@azure/msal-node');
 
 module.exports = {
   /**
@@ -8,8 +9,30 @@ module.exports = {
    */
   getUserDetails: async function (msalClient, userId) {
     const client = getAuthenticatedClient(msalClient, userId);
-    const user = await client.api("/me").select("displayName,mail,mailboxSettings,userPrincipalName").get();
+    const user = await client
+      .api('/me')
+      .select('displayName,mail,mailboxSettings,userPrincipalName')
+      .get();
     return user;
+  },
+
+  generateMsalClient() {
+    return new msal.ConfidentialClientApplication({
+      auth: {
+        clientId: process.env.OAUTH_CLIENT_ID,
+        authority: process.env.OAUTH_AUTHORITY,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+      },
+      system: {
+        loggerOptions: {
+          loggerCallback(_loglevel, message, _containsPii) {
+            console.log(message);
+          },
+          piiLoggingEnabled: false,
+          logLevel: msal.LogLevel.Verbose,
+        },
+      },
+    });
   },
 };
 
@@ -20,7 +43,9 @@ module.exports = {
 function getAuthenticatedClient(msalClient, userId) {
   if (!msalClient || !userId) {
     throw new Error(
-      `Invalid MSAL state. Client: ${msalClient ? "present" : "missing"}, User ID: ${userId ? "present" : "missing"}`
+      `Invalid MSAL state. Client: ${
+        msalClient ? 'present' : 'missing'
+      }, User ID: ${userId ? 'present' : 'missing'}`
     );
   }
 
@@ -28,11 +53,13 @@ function getAuthenticatedClient(msalClient, userId) {
     authProvider: async (done) => {
       try {
         // Get the user's account
-        const account = await msalClient.getTokenCache().getAccountByHomeId(userId);
+        const account = await msalClient
+          .getTokenCache()
+          .getAccountByHomeId(userId);
 
         if (account) {
           const response = await msalClient.acquireTokenSilent({
-            scopes: process.env.OAUTH_SCOPES.split(","),
+            scopes: process.env.OAUTH_SCOPES.split(' '),
             redirectUri: process.env.OAUTH_REDIRECT_URI,
             account: account,
           });

@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
       "target": "ES6",
-      "checkJs": false
+      "checkJs": true,
+      "moduleResolution": "Node",
+      "resolveJsonModule": true,
   },
   "include": [
       "**/src/**/*"
-  ]
+  ],
 }

@@ -61,11 +61,7 @@ class SchoolScheduleHelpler {
   async handleAlertIfExists() {
     let alertMessage = await this._webCrawler.elementController.getAcceptMessageIfExistAndAcceptIt();
     if (alertMessage) {
-      if (alertMessage === "Server đang tải lại dữ liệu. Vui lòng trở lại sau 15 phút!") {
-        throw new Error(alertMessage);
-      }
-
-      throw new Error("Lỗi khi mở website thời khóa biểu");
+      throw new Error(alertMessage);
     }
   }
 

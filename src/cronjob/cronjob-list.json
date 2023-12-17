@@ -1,0 +1,11 @@
+{
+  "event-queue:create": {
+    "name": "event-queue:create",
+    "pattern": "0 */1 * * *"
+  },
+  "daily-limit:reset": {
+    "name": "daily-limit:reset",
+    "pattern": "0 0 * * *",
+    "lastRunAt": "Sat Dec 09 2023 11:03:52 GMT+0700 (Indochina Time)"
+  }
+}

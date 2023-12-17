@@ -1,6 +1,6 @@
 class User {
   /**
-   * @type {number}
+   * @type {string}
    */
   id;
 
@@ -8,6 +8,11 @@ class User {
    * @type {string}
    */
   teacherId;
+
+  /**
+   * @type {string | undefined}
+   */
+  name;
 
   /**
    * @type {string}

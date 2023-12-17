@@ -27,7 +27,7 @@ function getAuthenticatedClient(msalClient, userId) {
 
         if (account) {
           const response = await msalClient.acquireTokenSilent({
-            scopes: process.env.OAUTH_SCOPES.split(','),
+            scopes: process.env.OAUTH_SCOPES.split(' '),
             redirectUri: process.env.OAUTH_REDIRECT_URI,
             account: account
           });
