@@ -25,7 +25,6 @@ if (!process.env.JEST_WORKER_ID) {
           'HH:mm:ss DD/MM/YYYY'
         )}`
       );
-      return;
 
       await createEventQueue.staleAllInProgessJobs();
       const allUsers = await userRepository.getAll();
