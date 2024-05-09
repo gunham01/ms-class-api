@@ -1,7 +1,7 @@
-const bcrypt = require("bcryptjs");
-const { createHash } = require("crypto");
-const jwt = require("jsonwebtoken");
-require("dotenv").config({path: "../.env"});
+const bcrypt = require('bcryptjs');
+const { createHash } = require('crypto');
+const jwt = require('jsonwebtoken');
+require('dotenv').config({ path: '../.env' });
 
 class CryptoUtils {
   /**
@@ -10,7 +10,7 @@ class CryptoUtils {
    * @param {"sha256" | "sha512"} algorithm
    */
   static createHash(value, algorithm) {
-    return createHash(algorithm).update(value).digest("hex");
+    return createHash(algorithm).update(value).digest('hex');
   }
 
   /**
@@ -32,7 +32,7 @@ class CryptoUtils {
 }
 
 class HashAlgorithm {
-  static SHA256 = "sha256";
+  static SHA256 = 'sha256';
 }
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { By, until, WebDriver } = require("selenium-webdriver");
+const { By, until, WebDriver } = require('selenium-webdriver');
 
 class WebElementController {
   /**
@@ -16,7 +16,7 @@ class WebElementController {
     const alert = await this.getAlert();
     if (alert) {
       const alertMessage = await alert.getText();
-      alert.accept();
+      await alert.accept();
       return alertMessage;
     }
 
@@ -55,7 +55,10 @@ class WebElementController {
    */
   async waitElementPresence(id, timeOutInSeconds = 0) {
     const desiredElement = await this._driver.findElement(By.id(id));
-    return await this._driver.wait(until.elementIsVisible(desiredElement), timeOutInSeconds);
+    return await this._driver.wait(
+      until.elementIsVisible(desiredElement),
+      timeOutInSeconds * 1000,
+    );
   }
 
   /**

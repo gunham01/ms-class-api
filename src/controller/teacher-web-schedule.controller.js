@@ -16,14 +16,13 @@ class TeacherWebScheduleController {
     try {
       const teacherSchedule = await new TeacherScheduleProvider().getSchedule(
         teacherId,
-        semesterId
+        semesterId,
       );
-      // await this.saveSchoolWebSchedule(teacherSchedule);
       return HttpResponse.ok(teacherSchedule);
     } catch (error) {
-      Logger.logError(error, { message: 'Lỗi khi lấy lịch từ đào tạo' })
+      Logger.logError(error, { message: 'Lỗi khi lấy lịch từ đào tạo' });
       return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        'Có lỗi xảy ra khi lấy lịch: ' + error
+        'Có lỗi xảy ra khi lấy lịch: ' + error,
       );
     }
   }
@@ -39,7 +38,7 @@ class TeacherWebScheduleController {
     } catch (error) {
       console.error('Lỗi khi lấy học kỳ.', error);
       return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        'Có lỗi xảy ra khi lấy học kỳ: ' + error
+        error.message ?? 'Có lỗi xảy ra khi lấy học kỳ',
       );
     }
   }

@@ -19,45 +19,48 @@ const { Student } = require('../model/student.model');
  * }} Semester
  */
 /**
- * @typedef {ReturnType<OutlookEventService['convertSchoolWebEventToOutlookEvents']>} OutlookEvent
+ * @typedef {ReturnType<OutlookEventService['convertRecurrenceToOutlookEvent']>} OutlookEvent
  */
 
 class OutlookEventService {
-
   /**
    * @param {SchoolWebEvent} schoolWebEvent
    */
   convertSchoolWebEventToOutlookEvents(schoolWebEvent) {
     const recurrences = this.generateRecurrences(
       schoolWebEvent,
-      schoolWebEvent.semester.startDate
+      schoolWebEvent.semester.startDate,
     );
 
-    return recurrences.map((recurrence) => {
-      const { other, ...outlookEventRecurrence } = recurrence;
-      const { startPeriod, endPeriod } = other;
-      const startTimeEndTimePair = this.generateStartEnd(
-        dayjs(recurrence.range.startDate),
-        {
-          startPeriod,
-          endPeriod,
-        }
-      );
+    return recurrences.map((recurrence) =>
+      this.convertRecurrenceToOutlookEvent(recurrence, { schoolWebEvent }),
+    );
+  }
 
-      return {
-        subject:
-          (process.env.ENV === 'dev' ? '[Test - Vui lòng bỏ qua] ' : '') +
-          this.generateSubject(schoolWebEvent),
-        body: this.generateBody(recurrence, startTimeEndTimePair),
-        ...startTimeEndTimePair,
-        recurrence: outlookEventRecurrence,
-        attendees: this.generateAttendees(recurrence.other.students),
-        isOnlineMeeting: !!schoolWebEvent.hasOnlineMeeting,
-        ...(schoolWebEvent.hasOnlineMeeting && {
-          onlineMeetingProvider: 'teamsForBusiness',
-        }),
-      };
-    });
+  convertRecurrenceToOutlookEvent(recurrence, { schoolWebEvent }) {
+    const { other, ...outlookEventRecurrence } = recurrence;
+    const { startPeriod, endPeriod } = other;
+    const startTimeEndTimePair = this.generateStartEnd(
+      dayjs(recurrence.range.startDate),
+      {
+        startPeriod,
+        endPeriod,
+      },
+    );
+
+    return {
+      subject:
+        (process.env.ENV === 'dev' ? '[Test - Vui lòng bỏ qua] ' : '') +
+        this.generateSubject(schoolWebEvent),
+      body: this.generateBody(recurrence, startTimeEndTimePair),
+      ...startTimeEndTimePair,
+      recurrence: outlookEventRecurrence,
+      attendees: this.generateAttendees(recurrence.other.students),
+      isOnlineMeeting: !!schoolWebEvent.hasOnlineMeeting,
+      ...(schoolWebEvent.hasOnlineMeeting && {
+        onlineMeetingProvider: 'teamsForBusiness',
+      }),
+    };
   }
 
   /**
@@ -106,7 +109,7 @@ class OutlookEventService {
       Thursday: 'thứ Năm',
       Friday: 'thứ Sáu',
       Saturday: 'thứ Bảy',
-      Sun: 'Chủ Nhật',
+      Sunday: 'Chủ Nhật',
     };
 
     const startDate = dayjs(startDateStr);
@@ -169,12 +172,12 @@ class OutlookEventService {
   generateRecurrences(schoolWebEvent, semesterStartDate) {
     const result = [];
     const occurrences = this.mergeRecurrencesHaveSameDateRangeAndTimeRange(
-      schoolWebEvent.occurrences
+      schoolWebEvent.occurrences,
     );
     for (const occurence of occurrences) {
       const dateRange = this.convertWeekStringToDateRanges(
         occurence.weekStr,
-        dayjs(semesterStartDate)
+        dayjs(semesterStartDate),
       );
 
       const recurrence = dateRange.map(({ start, end }) => ({
@@ -182,7 +185,7 @@ class OutlookEventService {
           type: 'weekly',
           interval: 1,
           daysOfWeek: occurence.dayOfWeeks.map(
-            (dayOfWeek) => DAYS_OF_WEEK[dayOfWeek]
+            (dayOfWeek) => DAYS_OF_WEEK[dayOfWeek],
           ),
         },
         range: {
@@ -219,7 +222,7 @@ class OutlookEventService {
           item.startPeriod === recurrence.startPeriod &&
           item.endPeriod === recurrence.endPeriod &&
           !item.practiceGroup &&
-          !recurrence.practiceGroup
+          !recurrence.practiceGroup,
       );
       if (existedRecurrence) {
         existedRecurrence.dayOfWeeks.push(...recurrence.dayOfWeeks);
@@ -265,22 +268,19 @@ class OutlookEventService {
    * @param {Student[]} students
    */
   generateAttendees(students) {
-    const result = students.map((student) => ({
+    // if (process.env.ENV === 'dev') {
+    //     return ['637749@sv.vnua.edu.vn'].map((email) => ({
+    //         emailAddress: {
+    //             address: email,
+    //         },
+    //     }));
+    // }
+
+    return students.map((student) => ({
       emailAddress: {
         address: `${student.id}@sv.vnua.edu.vn`,
       },
     }));
-    console.log('[LOG] : Real attendee list:', result)
-    
-
-    if (process.env.ENV === 'dev') {
-      return ['637749@sv.vnua.edu.vn'].map((email) => ({
-        emailAddress: {
-          address: email,
-        },
-      }));
-    }
-
   }
 }
 

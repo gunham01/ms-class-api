@@ -11,14 +11,14 @@ const requestValidator = new VNUARequestValidator();
 const vnuaRouter = express.Router();
 vnuaRouter.use(
   RouterUtils.verifyJwtExisted,
-  RouterUtils.authenticateAccessToken
+  RouterUtils.authenticateAccessToken,
 );
 vnuaRouter.get('/semesters', getSemesters);
 vnuaRouter.post(
   '/schedule',
   requestValidator.teachingScheduleRequestValidator,
   RouterUtils.respondWithRequestValidationErrorIfAny,
-  getTeacherSchedule
+  getTeacherSchedule,
 );
 
 /**
@@ -48,7 +48,7 @@ async function getTeacherSchedule(request, response) {
     const serverTeacherScheduleResponse =
       await ControllerFactory.teacherWebScheduleController.getSchedule(
         teacherId,
-        semesterId
+        semesterId,
       );
     RouterUtils.response(response, serverTeacherScheduleResponse);
   } catch (error) {

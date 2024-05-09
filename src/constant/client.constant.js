@@ -2,11 +2,11 @@ let clientUrl;
 
 module.exports = {
   /**
-   * 
-   * @param {string} baseUrl 
+   *
+   * @param {string} baseUrl
    */
   setClientUrl(baseUrl) {
-    clientUrl = baseUrl + '/vnuaClassesTab'
+    clientUrl = baseUrl + '/vnuaClassesTab';
   },
 
   /**
@@ -14,5 +14,5 @@ module.exports = {
    */
   getClientUrl() {
     return clientUrl;
-  }
-}
+  },
+};

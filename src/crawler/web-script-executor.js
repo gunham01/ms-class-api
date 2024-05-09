@@ -1,5 +1,5 @@
-const { WebDriver } = require("selenium-webdriver");
-const { FileIOUtils } = require("../utils/file-io.utils");
+const { WebDriver } = require('selenium-webdriver');
+const { FileIOUtils } = require('../utils/file-io.utils');
 
 class WebScriptExecutor {
   /**
@@ -35,7 +35,9 @@ class WebScriptExecutor {
   async executeScriptAsync(scriptLocation, timeOutInSeconds = 0) {
     if (timeOutInSeconds > 0) {
       const timeOuts = await this._driver.manage().getTimeouts();
-      this._driver.manage().setTimeouts({ ...timeOuts, ...{ script: timeOutInSeconds * 1000 } });
+      this._driver
+        .manage()
+        .setTimeouts({ ...timeOuts, ...{ script: timeOutInSeconds * 1000 } });
     }
 
     const scriptContent = await FileIOUtils.readFile(scriptLocation);

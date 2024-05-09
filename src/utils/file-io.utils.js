@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require('fs');
 
 class FileIOUtils {
   /**
@@ -8,7 +8,7 @@ class FileIOUtils {
    */
   static readFile(fileLocation) {
     return new Promise((resolve, reject) => {
-      fs.readFile(fileLocation, "utf-8", (err, data) => {
+      fs.readFile(fileLocation, 'utf-8', (err, data) => {
         if (err) {
           reject(err);
         }

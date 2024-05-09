@@ -1,6 +1,6 @@
-const { WebDriver } = require("selenium-webdriver");
-const { WebElementController } = require("./web-element-controller");
-const { WebScriptExecutor } = require("./web-script-executor");
+const { WebDriver } = require('selenium-webdriver');
+const { WebElementController } = require('./web-element-controller');
+const { WebScriptExecutor } = require('./web-script-executor');
 
 class WebCrawler {
   /**
@@ -32,17 +32,19 @@ class WebCrawler {
     try {
       await this._driver.close();
     } catch (error) {
-      console.error("Error when close web driver: ", error);
+      console.error('Error when close web driver: ', error);
     }
   }
 
   async waitPageFinishesLoading() {
-    this._driver.wait(this.isWebFinishedLoading(), 30000);
+    this._driver.wait(this.isWebFinishedLoading, 30000);
   }
 
   async isWebFinishedLoading() {
-    const webState = await this._scriptExecutor.executeScriptRaw("return document.state");
-    return webState === "complete";
+    const webState = await this._scriptExecutor.executeScriptRaw(
+      'return document.state',
+    );
+    return webState === 'complete';
   }
 }
 

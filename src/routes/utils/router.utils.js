@@ -32,7 +32,7 @@ class RouterUtils {
     }
 
     request['user'] = JwtManager.decodeToken(
-      RouterUtils.getAccessToken(request)
+      RouterUtils.getAccessToken(request),
     );
     next();
   }

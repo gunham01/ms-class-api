@@ -1,4 +1,4 @@
-const dotenv = require("dotenv");
+const dotenv = require('dotenv');
 dotenv.config(); // Phải có dòng này để đọc được file .env
 
 function getPort() {

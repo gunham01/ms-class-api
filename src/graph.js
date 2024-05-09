@@ -16,22 +16,24 @@ module.exports = {
     return user;
   },
 
-  msalClient: new msal.ConfidentialClientApplication({
-    auth: {
-      clientId: process.env.OAUTH_CLIENT_ID,
-      authority: process.env.OAUTH_AUTHORITY,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-    },
-    system: {
-      loggerOptions: {
-        loggerCallback(_loglevel, message, _containsPii) {
-          console.log(message);
-        },
-        piiLoggingEnabled: false,
-        logLevel: msal.LogLevel.Verbose,
+  generateMsalClient() {
+    return new msal.ConfidentialClientApplication({
+      auth: {
+        clientId: process.env.OAUTH_CLIENT_ID,
+        authority: process.env.OAUTH_AUTHORITY,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
       },
-    },
-  }),
+      system: {
+        loggerOptions: {
+          loggerCallback(_loglevel, message, _containsPii) {
+            console.log(message);
+          },
+          piiLoggingEnabled: false,
+          logLevel: msal.LogLevel.Verbose,
+        },
+      },
+    });
+  },
 };
 
 /**
@@ -43,7 +45,7 @@ function getAuthenticatedClient(msalClient, userId) {
     throw new Error(
       `Invalid MSAL state. Client: ${
         msalClient ? 'present' : 'missing'
-      }, User ID: ${userId ? 'present' : 'missing'}`
+      }, User ID: ${userId ? 'present' : 'missing'}`,
     );
   }
 

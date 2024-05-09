@@ -8,8 +8,8 @@
  *  id?: string
  *  name?: string
  *  content: string
- *  contentType: 'reference' 
- *    | 'application/vnd.microsoft.card.codesnippet' 
+ *  contentType: 'reference'
+ *    | 'application/vnd.microsoft.card.codesnippet'
  *    | 'application/vnd.microsoft.card.announcement'
  *  contentUrl?: string
  * }} ChatMessageAttachment
@@ -33,5 +33,5 @@ class MSChatMessage {
 }
 
 module.exports = {
-  MSChatMessage
-}
+  MSChatMessage,
+};

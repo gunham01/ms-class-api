@@ -1,4 +1,7 @@
-const { ResponseType, HttpMethod: PrismaHttpMethod } = require('@prisma/client');
+const {
+  ResponseType,
+  HttpMethod: PrismaHttpMethod,
+} = require('@prisma/client');
 const { MsEvent } = require('../model/graph-api/ms-event.model');
 const { UserRepository } = require('../repository/user.repository');
 const { msGraphApiLogger } = require('./ms-graph-api.logger');
@@ -33,7 +36,7 @@ function generateCommonHeader(token, { method }) {
 
 /**
  * @param {AxiosRequestConfig} axiosConfig
- * @param {{msToken: string}} param1
+ * @param {{ msToken: string }} param1
  */
 async function callMsGraphApi(axiosConfig, { msToken }) {
   const user = await userRepository.getByMsToken(msToken);
@@ -46,7 +49,7 @@ async function callMsGraphApi(axiosConfig, { msToken }) {
   try {
     const response = await axios(axiosConfig);
     await msGraphApiLogger.log({
-      userId: user.id,
+      userEmail: user.email,
       method,
       request,
       response: {
@@ -60,7 +63,7 @@ async function callMsGraphApi(axiosConfig, { msToken }) {
   } catch (error) {
     if (error.isAxiosError) {
       await msGraphApiLogger.log({
-        userId: user.id,
+        userEmail: user.email,
         method,
         request,
         response: {
@@ -90,7 +93,7 @@ module.exports = {
       method: 'get',
       url: '/me',
     };
-    return callMsGraphApi(axiosConfig, { msToken: token });
+    return axios(axiosConfig);
   },
 
   /**
@@ -107,7 +110,8 @@ module.exports = {
       url: '/teams',
       data: data,
     };
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -122,7 +126,8 @@ module.exports = {
       method: 'get',
       url: '/me/joinedTeams',
     };
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -149,7 +154,8 @@ module.exports = {
       },
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -168,7 +174,8 @@ module.exports = {
       url,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -186,10 +193,7 @@ module.exports = {
       data: event,
     };
 
-    const response = await callMsGraphApi(axiosRequestConfig, {
-      msToken: token,
-    });
-    return response.data;
+    return callMsGraphApi(axiosRequestConfig, { msToken: token });
   },
 
   /**
@@ -210,6 +214,27 @@ module.exports = {
       method: 'post',
       url: `/teams/${teamId}/channels`,
       data: channel,
+    };
+
+    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+  },
+
+  /**
+   *
+   * @param {string} token
+   * @param {{
+   *  teamId: string,
+   *  channelDisplayName: string
+   * }} param1
+   */
+  getChannel(token, { teamId, channelDisplayName }) {
+    /**
+     * @type {AxiosRequestConfig}
+     */
+    const axiosRequestConfig = {
+      headers: generateCommonHeader(token, { method: 'GET' }),
+      method: 'get',
+      url: `/teams/${teamId}/channels?$filter=displayName eq '${channelDisplayName}'`,
     };
 
     return callMsGraphApi(axiosRequestConfig, { msToken: token });
@@ -246,6 +271,14 @@ module.exports = {
     return callMsGraphApi(axiosRequestConfig, { msToken: token });
   },
 
+  /**
+   * @param {string} token
+   * @param {{
+   *  teamId: string,
+   *  size: number,
+   *  page: number
+   * }} param1
+   */
   getAllTeamEvent(token, { teamId, size, page }) {
     /**
      * @type {AxiosRequestConfig}
@@ -257,10 +290,18 @@ module.exports = {
         (page - 1) * size
       }`,
     };
+
     return callMsGraphApi(axiosRequestConfig, { msToken: token });
   },
 
-  cancelEvent(token, { teamId, eventId }) {
+  /**
+   * @param {string} token
+   * @param {{
+   *  teamId: string,
+   *  eventId: string
+   * }} param1
+   */
+  cancelGroupEvent(token, { teamId, eventId }) {
     /**
      * @type {AxiosRequestConfig}
      */

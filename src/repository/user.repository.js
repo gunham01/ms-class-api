@@ -1,22 +1,23 @@
-const Prisma = require('../database/prisma.database.js');
+const { Prisma } = require('.prisma/client');
+const prisma = require('../database/prisma.database.js');
 const { User } = require('../model/user.model.js');
 
 class UserRepository {
   /**
-   * @param {User} user
+   * @param {Prisma.UserCreateInput} user
    */
   async insert(user) {
-    return Prisma.user.create({
+    return prisma.user.create({
       data: user,
     });
   }
 
   getAll() {
-    return Prisma.user.findMany();
+    return prisma.user.findMany();
   }
 
   async getAllUserIds() {
-    const users = await Prisma.user.findMany({
+    const users = await prisma.user.findMany({
       select: {
         id: true,
       },
@@ -31,7 +32,7 @@ class UserRepository {
    */
   async existedByEmail(email) {
     return (
-      (await Prisma.user.count({
+      (await prisma.user.count({
         where: {
           email,
         },
@@ -46,7 +47,7 @@ class UserRepository {
    */
   async existedByTeacherId(teacherId) {
     return (
-      (await Prisma.user.count({
+      (await prisma.user.count({
         where: {
           teacherId,
         },
@@ -54,12 +55,23 @@ class UserRepository {
     );
   }
 
+  updateTeacherId(id, teacherId) {
+    return prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        teacherId,
+      },
+    });
+  }
+
   /**
    * @public
    * @param {string} email
    */
   getByEmail(email) {
-    return Prisma.user.findUnique({
+    return prisma.user.findUnique({
       where: { email },
     });
   }
@@ -69,7 +81,7 @@ class UserRepository {
    * @param {string} msToken
    */
   getByMsToken(msToken) {
-    return Prisma.user.findFirstOrThrow({
+    return prisma.user.findFirstOrThrow({
       where: { msAccessToken: msToken },
     });
   }
@@ -79,7 +91,7 @@ class UserRepository {
    * @param {string} teacherId
    */
   getByTeacherId(teacherId) {
-    return Prisma.user.findFirstOrThrow({
+    return prisma.user.findFirstOrThrow({
       where: { teacherId },
     });
   }
@@ -90,7 +102,7 @@ class UserRepository {
    * @param {string} token
    */
   updateAccessToken(userUsername, token) {
-    return Prisma.user.update({
+    return prisma.user.update({
       where: {
         email: userUsername,
       },
@@ -103,32 +115,31 @@ class UserRepository {
    * @public
    * @param {string} userEmail
    * @param {{
-   *  msAccessToken?: string,
-   *  msRefreshToken?: string,
-   *  msAccessTokenExpireOn?: Date,
-   *  accountInfo?: import('@azure/msal-common').AccountInfo
+   *  name: string
+   *  accessToken?: string,
+   *  refreshToken?: string,
+   *  accessTokenExpireOn?: Date,
    * }} param0
    */
   updateMsInfo(
     userEmail,
-    { msAccessToken, msRefreshToken, msAccessTokenExpireOn, accountInfo }
+    { name, accessToken, refreshToken, accessTokenExpireOn },
   ) {
-    return Prisma.user.update({
+    return prisma.user.update({
       where: {
         email: userEmail,
       },
       data: {
-        name: accountInfo?.name,
-        msAccessToken,
-        msRefreshToken,
-        msAccessTokenExpireOn,
-        msAccountInfo: JSON.stringify(accountInfo),
+        name,
+        msAccessToken: accessToken,
+        msRefreshToken: refreshToken,
+        msAccessTokenExpireOn: accessTokenExpireOn,
       },
     });
   }
 
   async isJwtExisted(jwt) {
-    const userWithJwtCount = await Prisma.user.count({
+    const userWithJwtCount = await prisma.user.count({
       where: {
         accessToken: jwt,
       },
@@ -137,7 +148,7 @@ class UserRepository {
   }
 
   resetAllCounter() {
-    return Prisma.user.updateMany({
+    return prisma.user.updateMany({
       data: {
         todayEmailSentCount: 0,
       },
@@ -148,13 +159,13 @@ class UserRepository {
    * @param {string} id
    * @param {number} quantity
    */
-  setEmailCounter(id, quantity) {
-    return Prisma.user.update({
+  increaseEmailCounter(id, quantity) {
+    return prisma.user.update({
       where: {
         id,
       },
       data: {
-        todayEmailSentCount: quantity,
+        todayEmailSentCount: { increment: quantity },
       },
     });
   }

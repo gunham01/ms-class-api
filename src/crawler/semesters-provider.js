@@ -1,28 +1,26 @@
-const { By, WebElement } = require("selenium-webdriver");
-const { ChromeWebCrawler } = require("./chrome.web-crawler");
-const DateUtils = require("../utils/date.utils");
-const { Semester } = require("../model/semester.model");
-const moment = require("moment");
-const { SchoolScheduleHelpler } = require("./school-schedule.helpler");
+const { By, WebElement } = require('selenium-webdriver');
+const { ChromeWebCrawler } = require('./chrome.web-crawler');
+const DateUtils = require('../utils/date.utils');
+const { Semester } = require('../model/semester.model');
+const moment = require('moment');
+const { SchoolScheduleHelpler } = require('./school-schedule.helpler');
+const { PromiseUtils } = require('../utils/promise.utils');
 
 class SemesterProvider {
-  _semesterDropdownListHTMLId = "ctl00_ContentPlaceHolder1_ctl00_ddlChonNHHK";
-  _textContainsSemesterStartDateElementId = "ctl00_ContentPlaceHolder1_ctl00_lblNote";
+  _semesterDropdownListHTMLId = 'ctl00_ContentPlaceHolder1_ctl00_ddlChonNHHK';
+  _textContainsSemesterStartDateElementId =
+    'ctl00_ContentPlaceHolder1_ctl00_lblNote';
 
   /**
    * @public
-   * @returns {Promise<Semester[]>}
+   * {Promise<Semester[]>}
+   * @returns {Promise<any[]>}
    */
   async getSemesters() {
-    try {
-      await this.prepareToReadSemesters();
-      let semesters = await this.readSemestersFromWeb();
-      await this._webCrawler.close();
-      return this.setActiveSemesterIn(semesters);
-    } catch (error) {
-      // console.log("Error when read semesters: ", error);
-      throw error;
-    }
+    await this.prepareToReadSemesters();
+    let semesters = await this.readSemestersFromWeb();
+    await this._webCrawler.close();
+    return this.setActiveSemesterIn(semesters);
   }
 
   /**
@@ -30,12 +28,13 @@ class SemesterProvider {
    */
   async prepareToReadSemesters() {
     this._webCrawler = await ChromeWebCrawler.initialize();
-
     try {
-      const semestersWebUrl = `http://daotao.vnua.edu.vn/default.aspx?page=thoikhoabieu&sta=1&id=637749`;
-      await new SchoolScheduleHelpler(this._webCrawler).prepareToReadSemesters(semestersWebUrl);
+      const semestersWebUrl = `http://daotao.vnua.edu.vn/default.aspx?page=thoikhoabieu&sta=1&id=CNP02`;
+      await new SchoolScheduleHelpler(this._webCrawler).prepareToReadSemesters(
+        semestersWebUrl,
+      );
     } catch (error) {
-      console.error("error", error);
+      console.error('error', error);
       await this._webCrawler.close();
       throw error;
     }
@@ -45,11 +44,12 @@ class SemesterProvider {
    * @private lấy các thẻ options để chọn học kỳ
    */
   async getSemesterHTMLOptions() {
-    const semesterDropdownList = await this._webCrawler.elementController.waitElementPresence(
-      this._semesterDropdownListHTMLId
-    );
+    const semesterDropdownList =
+      await this._webCrawler.elementController.waitElementPresence(
+        this._semesterDropdownListHTMLId,
+      );
 
-    return await semesterDropdownList.findElements(By.css("option"));
+    return await semesterDropdownList.findElements(By.css('option'));
   }
 
   /**
@@ -60,6 +60,10 @@ class SemesterProvider {
     let semesters = [];
     let fetchedSemesterCount = 0;
     let totalSemesterCount = 0;
+    await this._webCrawler.elementController.waitElementPresence(
+      this._semesterDropdownListHTMLId,
+      3000,
+    );
     const semesterStartDate = await this.getSemesterStartDate();
 
     do {
@@ -68,11 +72,17 @@ class SemesterProvider {
         totalSemesterCount = semesterOptions.length;
       }
 
-      const semester = await this.extractSemesterFrom(semesterOptions[fetchedSemesterCount]);
-      semesters.push({ ...semester, ...{ startDate: semesterStartDate } });
+      const semester = await this.extractSemesterFrom(
+        semesterOptions[fetchedSemesterCount],
+      );
+      semesters.push({
+        ...semester,
+        startDate: semesterStartDate,
+      });
       fetchedSemesterCount++;
 
       if (fetchedSemesterCount < totalSemesterCount) {
+        await PromiseUtils.delay(700);
         await semesterOptions[fetchedSemesterCount].click();
         await this._webCrawler.waitPageFinishesLoading();
       }
@@ -89,7 +99,7 @@ class SemesterProvider {
   async extractSemesterFrom(semesterHTMLOption) {
     const [name, id, semesterStartDate] = await Promise.all([
       semesterHTMLOption.getText(),
-      semesterHTMLOption.getAttribute("value"),
+      semesterHTMLOption.getAttribute('value'),
       this.getSemesterStartDate(),
     ]);
     return new Semester({
@@ -105,10 +115,10 @@ class SemesterProvider {
    */
   async getSemesterStartDate() {
     const noteElement = await this._webCrawler.elementController.getElementById(
-      this._textContainsSemesterStartDateElementId
+      this._textContainsSemesterStartDateElementId,
     );
     const noteContent = await noteElement.getText();
-    return DateUtils.extractDateFromString(noteContent, "DD/MM/YYYY");
+    return DateUtils.extractDateFromString(noteContent, 'DD/MM/YYYY');
   }
 
   /**
@@ -116,12 +126,14 @@ class SemesterProvider {
    * @param {Semester[]} semesters
    */
   setActiveSemesterIn(semesters) {
-    let latestValidStartDateMoment = moment("01-01-1990", "DD-MM-YYYY");
+    let latestValidStartDateMoment = moment('01-01-1990', 'DD-MM-YYYY');
     let activeSemesterIndex = 0;
 
     semesters.forEach((semester, index) => {
       const semesterStartDateInMoment = moment(semester.startDate);
-      const newLatestDateIsValid = semesterStartDateInMoment.isAfter(latestValidStartDateMoment);
+      const newLatestDateIsValid = semesterStartDateInMoment.isAfter(
+        latestValidStartDateMoment,
+      );
       const semesterHasStarted = semesterStartDateInMoment.isBefore(moment());
       if (newLatestDateIsValid && semesterHasStarted) {
         activeSemesterIndex = index;

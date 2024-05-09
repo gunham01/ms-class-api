@@ -5,7 +5,9 @@ const { SchoolScheduleHelpler } = require('./school-schedule.helpler');
 const { WebCrawler } = require('./web-crawler');
 const { SchoolWebEvent } = require('../model/school-web-event.model');
 const moment = require('moment');
-const { Logger } = require('../utils/logger.utils');
+const fs = require('fs/promises');
+const { PromiseUtils } = require('../utils/promise.utils');
+const { CRAWLER_CONFIG } = require('./crawler-config');
 
 class TeacherScheduleProvider {
   /**
@@ -39,12 +41,12 @@ class TeacherScheduleProvider {
    * @public Lấy lịch giảng dạy của giảng viên trong trang đào tạo
    * @param { string } teacherId: mã giảng viên
    * @param { string } semesterId: mã học kỳ
-   * @returns {Promise<SchoolWebSchedule>} lịch giảng dạy
+   * {Promise<SchoolWebSchedule>} lịch giảng dạy
+   * @returns {Promise<any>} lịch giảng dạy
    */
   async getSchedule(teacherId, semesterId) {
     await this.initialize(teacherId, semesterId);
     const teachingEvents = await this.getTeachingEvents();
-
     await this.webCrawler.close();
 
     return new SchoolWebSchedule({
@@ -82,7 +84,7 @@ class TeacherScheduleProvider {
   async prepareToReadTeachingEvents(teacherId, semesterId) {
     try {
       await new SchoolScheduleHelpler(
-        this.webCrawler
+        this.webCrawler,
       ).prepareToReadTeachingEvents(teacherId, semesterId);
     } catch (error) {
       await this.webCrawler.close();
@@ -116,11 +118,17 @@ class TeacherScheduleProvider {
     const semester = await this.readSemester();
 
     let teachingEvents = await this.readScheduleOnWeb();
+    // await PromiseUtils.delay(999999)
     await this.getStudentsOfTeachingEvents(teachingEvents);
     teachingEvents = teachingEvents
       .filter((event) => event.students.value.length !== 0)
       .map((event) => ({ ...event, semester }));
 
+    // await fs.writeFile(
+    //   `${process.cwd()}/src/resource/json/teachingEvents.json`,
+    //   JSON.stringify(teachingEvents),
+    //   'utf-8',
+    // );
     return teachingEvents;
   }
 
@@ -131,7 +139,7 @@ class TeacherScheduleProvider {
   async readScheduleOnWeb() {
     try {
       return this.webCrawler.scriptExecutor.executeScript(
-        TeacherScheduleProvider.resourceLocations.readSchedule
+        TeacherScheduleProvider.resourceLocations.readSchedule,
       );
     } catch (error) {
       await this.webCrawler.close();
@@ -144,7 +152,7 @@ class TeacherScheduleProvider {
     try {
       const { index, startDateStr, startYear, endYear } =
         await this.webCrawler.scriptExecutor.executeScript(
-          TeacherScheduleProvider.resourceLocations.readSemesterStartDate
+          TeacherScheduleProvider.resourceLocations.readSemesterStartDate,
         );
       return {
         index,
@@ -154,6 +162,7 @@ class TeacherScheduleProvider {
       };
     } catch (error) {
       await this.webCrawler.close();
+      console.error('Reading current semester failed!', error);
       throw new Error('Lỗi khi thông tin học kỳ hiện tại');
     }
   }
@@ -172,14 +181,14 @@ class TeacherScheduleProvider {
         } else {
           const existingOccurrenceWithSamePracticeGroup =
             event.occurrences.find(
-              (item) => item.practiceGroup === occurrence.practiceGroup
+              (item) => item.practiceGroup === occurrence.practiceGroup,
             );
           if (existingOccurrenceWithSamePracticeGroup?.students.value) {
             occurrence.students.value =
               existingOccurrenceWithSamePracticeGroup.students.value;
           } else {
             occurrence.students.value = await this.readStudentList(
-              occurrence.students.listUrl
+              occurrence.students.listUrl,
             );
           }
         }
@@ -193,10 +202,12 @@ class TeacherScheduleProvider {
    * @returns danh sách sinh viên
    */
   async readStudentList(studentListUrl) {
+    await PromiseUtils.delay(CRAWLER_CONFIG.waitTime);
     await this.webCrawler.navigateTo(studentListUrl);
     try {
+      await PromiseUtils.delay(CRAWLER_CONFIG.waitTime);
       return this.webCrawler.scriptExecutor.executeScript(
-        TeacherScheduleProvider.resourceLocations.readStudentList
+        TeacherScheduleProvider.resourceLocations.readStudentList,
       );
     } catch (error) {
       await this.webCrawler.close();

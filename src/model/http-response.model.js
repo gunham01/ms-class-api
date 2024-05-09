@@ -1,4 +1,4 @@
-const { HttpStatus } = require("../utils/http.utils");
+const { HttpStatus } = require('../utils/http.utils');
 
 class HttpResponse {
   /**
@@ -108,7 +108,7 @@ class HttpResponseBuilder {
    * @returns {HttpResponse}
    */
   body(body) {
-    if (!this._status) throw new Error("Status is empty!");
+    if (!this._status) throw new Error('Status is empty!');
     return new HttpResponse({ status: this._status, body: body });
   }
 }

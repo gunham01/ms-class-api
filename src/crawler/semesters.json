@@ -1,0 +1,20 @@
+[
+  {
+    "id": "20232",
+    "name": "Học kỳ 2 - Năm học 2023-2024",
+    "startDate": "2024-01-14T17:00:00.000Z",
+    "isActive": true
+  },
+  {
+    "id": "20231",
+    "name": "Học kỳ 1 - Năm học 2023-2024",
+    "startDate": "2024-01-14T17:00:00.000Z",
+    "isActive": false
+  },
+  {
+    "id": "20222",
+    "name": "Học kỳ 2 - Năm học 2022-2023",
+    "startDate": "2024-01-14T17:00:00.000Z",
+    "isActive": false
+  }
+]

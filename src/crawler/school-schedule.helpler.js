@@ -1,14 +1,16 @@
-const { By } = require("selenium-webdriver");
-const { WebCrawler } = require("./web-crawler");
+const { By } = require('selenium-webdriver');
+const { WebCrawler } = require('./web-crawler');
+const { PromiseUtils } = require('../utils/promise.utils');
+const { setWaitTime, CRAWLER_CONFIG } = require('./crawler-config');
 
 class SchoolScheduleHelpler {
   static _jsFileLocations = {
-    myJquery: "./src/resource/js/MyJQuery.js",
-    captcha: "./src/resource/js/captcha.js",
+    myJquery: './src/resource/js/MyJQuery.js',
+    captcha: './src/resource/js/captcha.js',
   };
   static _webElementIds = {
-    orderByPeriodRadioButton: "ctl00_ContentPlaceHolder1_ctl00_rad_ThuTiet",
-    semesterDropdownListHTMLId: "ctl00_ContentPlaceHolder1_ctl00_ddlChonNHHK",
+    orderByPeriodRadioButton: 'ctl00_ContentPlaceHolder1_ctl00_rad_ThuTiet',
+    semesterDropdownListHTMLId: 'ctl00_ContentPlaceHolder1_ctl00_ddlChonNHHK',
   };
 
   /**
@@ -21,8 +23,8 @@ class SchoolScheduleHelpler {
 
   /**
    * @public
-   * @param {string} teacherId 
-   * @param {string} semesterId 
+   * @param {string} teacherId
+   * @param {string} semesterId
    */
   async prepareToReadTeachingEvents(teacherId, semesterId) {
     const teachingScheduleWebUrl = `http://daotao.vnua.edu.vn/default.aspx?page=thoikhoabieu&sta=1&id=${teacherId}`;
@@ -30,27 +32,33 @@ class SchoolScheduleHelpler {
     await this._webCrawler.navigateTo(teachingScheduleWebUrl);
     await this.handleAlertIfExists();
     await this.injectJQuery();
-    const schoolWebRequireCaptcha = await this.fillCaptchaIfExists();
-    
+    const isCaptchaRequired = await this.fillCaptchaIfExists();
+
     // Sau khi điền captcha, web sẽ tự động điều hướng tới trang chủ, nên mình phải điều hướng lại
     // tới trang thời khóa biểu
-    if (schoolWebRequireCaptcha) {
+    if (isCaptchaRequired) {
       await this._webCrawler.navigateTo(teachingScheduleWebUrl);
+      setWaitTime(1000);
+    } else {
+      setWaitTime(1000);
+      await PromiseUtils.delay(CRAWLER_CONFIG.waitTime);
+      await this.selectSemester(semesterId);
+      await PromiseUtils.delay(CRAWLER_CONFIG.waitTime);
+      await this.selectOrderByPeriod();
     }
-
-    await this.selectSemester(semesterId);
-    await this.selectOrderByPeriod();
   }
 
   /**
    * @public
-   * @param {string} anySchoolScheduleUrl 
+   * @param {string} anySchoolScheduleUrl
    */
   async prepareToReadSemesters(anySchoolScheduleUrl) {
     await this._webCrawler.navigateTo(anySchoolScheduleUrl);
     await this.handleAlertIfExists();
     const schoolWebHasCaptcha = await this.fillCaptchaIfExists();
+
     if (schoolWebHasCaptcha) {
+      await PromiseUtils.delay(CRAWLER_CONFIG.waitTime);
       await this._webCrawler.navigateTo(anySchoolScheduleUrl);
     }
   }
@@ -59,7 +67,8 @@ class SchoolScheduleHelpler {
    * @private
    */
   async handleAlertIfExists() {
-    let alertMessage = await this._webCrawler.elementController.getAcceptMessageIfExistAndAcceptIt();
+    let alertMessage =
+      await this._webCrawler.elementController.getAcceptMessageIfExistAndAcceptIt();
     if (alertMessage) {
       throw new Error(alertMessage);
     }
@@ -70,9 +79,11 @@ class SchoolScheduleHelpler {
    */
   async injectJQuery() {
     try {
-      await this._webCrawler.scriptExecutor.executeScriptAsync(SchoolScheduleHelpler._jsFileLocations.myJquery);
+      await this._webCrawler.scriptExecutor.executeScriptAsync(
+        SchoolScheduleHelpler._jsFileLocations.myJquery,
+      );
     } catch (error) {
-      throw new Error("Lỗi khi inject JQuery: " + error);
+      throw new Error('Lỗi khi inject JQuery: ' + error);
     }
   }
 
@@ -82,9 +93,11 @@ class SchoolScheduleHelpler {
    */
   async fillCaptchaIfExists() {
     try {
-      return await this._webCrawler.scriptExecutor.executeScript(SchoolScheduleHelpler._jsFileLocations.captcha);
+      return await this._webCrawler.scriptExecutor.executeScript(
+        SchoolScheduleHelpler._jsFileLocations.captcha,
+      );
     } catch (error) {
-      throw new Error("Lỗi khi tự động điền captcha: " + error);
+      throw new Error('Lỗi khi tự động điền captcha: ' + error);
     }
   }
 
@@ -93,11 +106,16 @@ class SchoolScheduleHelpler {
    * @param {string} semesterId mã học kỳ
    */
   async selectSemester(semesterId) {
-    const semesterHTMLSelect = await this._webCrawler.elementController.getElementById(
-      SchoolScheduleHelpler._webElementIds.semesterDropdownListHTMLId
-    );
-    
-    const semesterHTMLOption = (await semesterHTMLSelect.findElements(By.css(`option[value=\"${semesterId}\"]`)))[0];
+    const semesterHTMLSelect =
+      await this._webCrawler.elementController.getElementById(
+        SchoolScheduleHelpler._webElementIds.semesterDropdownListHTMLId,
+      );
+
+    const semesterHTMLOption = (
+      await semesterHTMLSelect.findElements(
+        By.css(`option[value=\"${semesterId}\"]`),
+      )
+    )[0];
     if (!semesterHTMLOption) {
       throw new Error(`Mã học kỳ ${semesterId} không tồn tại`);
     }
@@ -109,10 +127,11 @@ class SchoolScheduleHelpler {
    * @private
    */
   async selectOrderByPeriod() {
-    const orderByPeriodRadioButton = await this._webCrawler.elementController.getElementById(
-      SchoolScheduleHelpler._webElementIds.orderByPeriodRadioButton,
-      50
-    );
+    const orderByPeriodRadioButton =
+      await this._webCrawler.elementController.getElementById(
+        SchoolScheduleHelpler._webElementIds.orderByPeriodRadioButton,
+        50,
+      );
     await orderByPeriodRadioButton.click();
   }
 }

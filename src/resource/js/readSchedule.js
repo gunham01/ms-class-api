@@ -41,15 +41,24 @@ function isBlankOrNull(str) {
   return /^\s*\n*$/.test(str) || !str;
 }
 
-const tableRows = $.map($('.grid-roll2>table>tbody>tr'), (tr) =>
-  // @ts-ignore
-  $(tr).find('>td')
+// const tableRows = $.map($('.grid-roll2>table>tbody>tr'), (tr) =>
+//   // @ts-ignore
+//   $(tr).find('>td'),
+// );
+const tableRows = Array.from(
+  document.querySelectorAll('.grid-roll2>table>tbody>tr'),
+).map((row) =>
+  Array.from(row.children).map(
+    (cell) => cell.querySelector('td div') ?? cell.querySelector('td') ?? cell,
+  ),
 );
+console.log('[INFO]  tableRows:', tableRows)
+
 const events = [];
 tableRows.forEach((row) => {
   let newEvent = new TeachingEvent();
-  $.each(row, (cellIndex, cell) => {
-    const cellText = $(cell).text();
+  row.forEach((cell, cellIndex) => {
+    const cellText = cell.innerHTML.trim().replace(/\&amp;/g, 'và');
     switch (cellIndex) {
       case 0:
         newEvent.subjectId = cellText;
@@ -95,7 +104,6 @@ tableRows.forEach((row) => {
       case 10: // Số tiết
         newEvent.occurrences[0].endPeriod =
           newEvent.occurrences[0].startPeriod + Number(cellText) - 1;
-        // console.log('period: ', event.time.period)
         break;
 
       case 11:
@@ -117,7 +125,7 @@ tableRows.forEach((row) => {
 
   if (
     [newEvent.classCodes, newEvent.students.listUrl].find(
-      (str) => !str || str.length === 0
+      (str) => !str || str.length === 0,
     )
   ) {
     return;
@@ -165,5 +173,6 @@ tableRows.forEach((row) => {
   events.push(newEvent);
 });
 
+console.log(events);
 // @ts-ignore
 return events;

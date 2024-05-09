@@ -36,14 +36,14 @@ test('Test dayjs', () => {
 
 test('Should convert to outlook calendar entity without error thrown', async () => {
   const outlookEvent =
-    outlookEventService.convertSchoolWebEventToOutlookEvents(creatingClassSample);
+    outlookEventService.convertSchoolWebEventToOutlookEvents(
+      creatingClassSample,
+    );
   global.console = console;
-  // console.log('outlook event: ');
-  // console.dir(outlookEvent, { depth: null });
 
   await fs.writeFile(
     './src/resource/temp.json',
-    JSON.stringify(outlookEvent, null, 2)
+    JSON.stringify(outlookEvent, null, 2),
   );
 });
 

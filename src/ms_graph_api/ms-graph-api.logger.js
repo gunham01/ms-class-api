@@ -4,19 +4,18 @@ const Prisma = require('../database/prisma.database');
 class MsGraphApiLogger {
   /**
    * @param {{
-   *  userId: string,
+   *  userEmail: string,
    *  method: HttpMethod,
    *  request: {url: string, body: string},
    *  response: {status: number, body: string},
    *  type: ResponseType
    * }} param0
    */
-  log({ userId, method, request, response, type }) {
-  // console.log('[LOG] : arguments:', arguments)
-  return Prisma.msGraphApiLog.create({
+  log({ userEmail, method, request, response, type }) {
+    return Prisma.msGraphApiLog.create({
       data: {
         user: {
-          connect: { id: userId },
+          connect: { email: userEmail },
         },
         method,
         requestUrl: request.url,

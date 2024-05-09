@@ -24,7 +24,7 @@ class JwtController {
       return HttpResponse.ok('Xác thực thành công');
     } catch (error) {
       return HttpResponse.status(HttpStatus.FORBIDDEN).body(
-        'Truy cập bị từ chối'
+        'Truy cập bị từ chối',
       );
     }
   }

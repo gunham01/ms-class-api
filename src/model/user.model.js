@@ -22,19 +22,19 @@ class User {
   /**
    * @type {string}
    */
-  password
-  
+  password;
+
   /**
    * @type {string}
    */
   msAccessToken;
-  
+
   createdAt = new Date();
   updatedAt = new Date();
 
   /**
    * @public
-   * @param {User} param0 
+   * @param {User} param0
    */
   constructor({ teacherId, email, msAccessToken }) {
     this.teacherId = teacherId;

@@ -13,9 +13,11 @@ class Logger {
     const errorLog =
       error instanceof AxiosError
         ? {
-            url: error.request.path,
-            body: error.config.data,
-            errorContent: error.response?.data?.error,
+            request: {
+              url: error.request.path,
+              body: error.config.data,
+            },
+            responseBody: error.response?.data?.error,
           }
         : error;
 

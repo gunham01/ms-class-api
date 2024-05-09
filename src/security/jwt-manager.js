@@ -9,7 +9,6 @@ class JwtManager {
    */
   static generateAccessToken(payload) {
     this.removeExpField(payload);
-    console.log(process.env.JWT_ACCESS_TOKEN_SECRET);
     return jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_SECRET, {
       expiresIn: process.env.JWT_ACCESS_TOKEN_DURATION,
     });

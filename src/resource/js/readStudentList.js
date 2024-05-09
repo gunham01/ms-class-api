@@ -1,14 +1,14 @@
 class Student {
   id = 0;
-  name = "";
+  name = '';
 
   constructor() {}
 }
 
 function getStudentInfoFromTableRow(row) {
   let student = new Student();
-  $.each(row, (cellIndex, cell) => {
-    const cellData = $(cell).text();
+  row.forEach((cell, cellIndex) => {
+    const cellData = cell.innerHTML.trim();
     // console.log(cell);
     switch (cellIndex) {
       case 1:
@@ -16,11 +16,11 @@ function getStudentInfoFromTableRow(row) {
         break;
 
       case 2:
-        student.name = "" + cellData;
+        student.name = '' + cellData;
         break;
 
       case 3:
-        student.name += " " + cellData;
+        student.name += ' ' + cellData;
         break;
 
       default:
@@ -31,13 +31,19 @@ function getStudentInfoFromTableRow(row) {
   return student;
 }
 
-const studentTableRows = $.map(
-  $("#ctl00_ContentPlaceHolder1_ctl00_gvDSSinhVien >tbody>tr"),
-  (tr) => $(tr).find(">td>span")
-).slice(1); // Bỏ dòng đầu tiên, dòng mà chứa tiêu đề của các cột (table headers)
+const studentTableRows = Array.from(
+  document.querySelectorAll(
+    '#ctl00_ContentPlaceHolder1_ctl00_gvDSSinhVien >tbody>tr',
+  ),
+)
+  .map((row) =>
+    Array.from(row.children).map((element) => element.querySelector('span')),
+  )
+  .slice(1);
+
 let studentList = [];
 studentTableRows.forEach((row) =>
-  studentList.push(getStudentInfoFromTableRow(row))
+  studentList.push(getStudentInfoFromTableRow(row)),
 );
 
 return studentList;

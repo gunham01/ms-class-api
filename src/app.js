@@ -8,7 +8,8 @@ const cors = require('cors');
 const { vnuaRouter } = require('./routes/vnua.routing');
 const msteamRouter = require('./routes/msteams.routing');
 const { authenticationRouter } = require('./routes/auth.routing');
-const { msalClient } = require('./graph');
+const { generateMsalClient: msalClient } = require('./graph');
+const { userRouter } = require('./routes/user.routing');
 require('./cronjob');
 
 const app = express();
@@ -42,6 +43,8 @@ app.use(cors());
 app.use('/api/vnua', vnuaRouter);
 app.use('/api/msteam', msteamRouter);
 app.use('/api/auth', authenticationRouter);
+app.use('/api/users', userRouter);
+app.get('/', (_unusedReq, res) => res.status(200).send('It works!'));
 
 // catch 404 and forward to error handler
 app.use((_req, _res, next) => {

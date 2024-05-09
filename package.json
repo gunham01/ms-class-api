@@ -5,7 +5,8 @@
   "main": "./src/bin/www",
   "scripts": {
     "start": "nodemon ./src/bin/www",
-    "start:tunnel": "ngrok http 3000"
+    "seeder": "node ./src/seeder.js",
+    "start:ngrok": "ngrok http 4000"
   },
   "author": "Nhóm 1",
   "license": "ISC",
@@ -15,9 +16,10 @@
     "axios": "^1.2.2",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.2",
-    "chromedriver": "^114.0.2",
+    "chromedriver": "^123.0.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "cron-parser": "^4.9.0",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",
     "dotenv": "^16.0.0",

@@ -1,11 +1,12 @@
 {
-  "createEventQueue": {
+  "event-queue:create": {
     "name": "event-queue:create",
-    "pattern": "0 */1 * * *"
+    "pattern": "0 */1 * * *",
+    "lastRunAt": "Tue Jan 16 2024 18:09:18 GMT+0700 (Indochina Time)"
   },
-  "resetDailyLimit": {
+  "daily-limit:reset": {
     "name": "daily-limit:reset",
     "pattern": "0 0 * * *",
-    "lastRunAt": "2023-07-18T05:04:12.685Z"
+    "lastRunAt": "Sun Jan 21 2024 00:00:00 GMT+0700 (Indochina Time)"
   }
 }

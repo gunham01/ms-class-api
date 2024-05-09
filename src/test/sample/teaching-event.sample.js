@@ -1305,5 +1305,5 @@ const sampleTeachingEvent = {
 };
 
 module.exports = {
-  sampleTeachingEvent
-}
+  sampleTeachingEvent,
+};

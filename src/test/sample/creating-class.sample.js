@@ -1,5 +1,3 @@
-const dayjs = require('dayjs');
-
 module.exports = {
   classCodes: 'K67CNPMB',
   credit: 3,
@@ -1032,7 +1030,7 @@ module.exports = {
   subjectName: 'Cấu trúc dữ liệu và giải thuật',
   semester: {
     index: 1,
-    startDate: dayjs('2023-08-13T17:00:00.000Z').toDate(),
+    startDate: new Date('2023-08-13T17:00:00.000Z'),
     startYear: 2023,
     endYear: 2024,
   },

@@ -39,7 +39,7 @@ class SchoolWebEvent {
   semester;
 
   /**
-   * @type {boolean}
+   * @type {boolean}}
    */
   hasOnlineMeeting;
 }
@@ -84,5 +84,5 @@ class SchoolWebEventOccurrence {
 
 module.exports = {
   SchoolWebEvent,
-  SchoolWebEventOccurrence
+  SchoolWebEventOccurrence,
 };

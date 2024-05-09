@@ -1,6 +1,7 @@
 const { JobStatus } = require('@prisma/client');
 const Prisma = require('../database/prisma.database');
 const { SchoolWebEvent } = require('../model/school-web-event.model');
+const { outlookEventService } = require('../service/outlook-event.service');
 
 class CreateEventQueue {
   /**
@@ -8,13 +9,12 @@ class CreateEventQueue {
    *  classId: string,
    *  creatingClass: SchoolWebEvent,
    *  userId: string
-   * }} param0 
+   * }} param0
    */
   add({ classId, creatingClass, userId }) {
-    
-    const attendeeSize = creatingClass.occurrences
-      .map(({ students: { value } }) => value.length) // get student list length
-      .reduce((total, current) => total + current, 0);
+    const msEvents =
+      outlookEventService.convertSchoolWebEventToOutlookEvents(creatingClass);
+    const attendeeSize = msEvents.reduce((a, b) => a + b.attendees.length, 0);
     return Prisma.createEventQueue.create({
       data: {
         classId,
@@ -26,7 +26,8 @@ class CreateEventQueue {
   }
 
   removeUnnecessaryFields(creatingClass) {
-    const {users, is_check, hasOnlineMeeting, ...necessaryFields}  = creatingClass;
+    const { users, is_check, hasOnlineMeeting, ...necessaryFields } =
+      creatingClass;
     return necessaryFields;
   }
 
@@ -55,16 +56,18 @@ class CreateEventQueue {
 
   /**
    *
-   * @param {string} id
-   * @param {JobStatus} status
+   * @param {import('@prisma/client').CreateEventQueue} record
+   * @param {JobStatus} newStatus
    */
-  updateStatus(id, status) {
+  updateStatus(record, newStatus) {
     return Prisma.createEventQueue.update({
       where: {
-        id,
+        id: record.id,
       },
       data: {
-        status,
+        status: newStatus,
+        retryCount:
+          record.status === JobStatus.FAIL ? { increment: 1 } : undefined,
       },
     });
   }

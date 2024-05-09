@@ -1,9 +1,9 @@
-const cors = require("cors");
-const express = require("express");
-const helmet = require("helmet");
-const http = require("http");
+const cors = require('cors');
+const express = require('express');
+const helmet = require('helmet');
+const http = require('http');
 var debug = require('debug')('ms-team-ms_graph_api:server');
-const { configRouting } = require("../routes/app.routing");
+const { configRouting } = require('../routes/app.routing');
 
 /**
  * Khởi tạo app Express
@@ -25,28 +25,28 @@ function initializeExpressApp(port) {
  * @param {http.Server} server
  */
 function configServer(server) {
-  server.on("error", onServerError);
-  server.on("listtening", onListening);
-  server.on("close", process.exit);
+  server.on('error', onServerError);
+  server.on('listtening', onListening);
+  server.on('close', process.exit);
 }
 
 function onServerError(error) {
-  if (error.syscall !== "listen") {
+  if (error.syscall !== 'listen') {
     throw error;
   }
 
-  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
   handleErrorCode(error.code, bind);
   // handle specific listen errors with friendly messages
 }
 
 function handleErrorCode(code, bind) {
   switch (code) {
-    case "EACCES":
-      console.error(bind + " requires elevated privileges");
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
       process.exit(1);
-    case "EADDRINUSE":
-      console.error(bind + " is already in use");
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
       process.exit(1);
     default:
       throw error;
@@ -55,8 +55,8 @@ function handleErrorCode(code, bind) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-  debug("Listening on " + bind);
+  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
+  debug('Listening on ' + bind);
 }
 
 module.exports = {

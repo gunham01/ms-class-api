@@ -1,0 +1,71 @@
+{
+  "classCodes": "K67CNPMB",
+  "credit": 3,
+  "subjectGroup": 1,
+  "subjectId": "TH02016",
+  "subjectName": "Cấu trúc dữ liệu và giải thuật",
+  "semester": {
+    "index": 1,
+    "startDate": "2023-08-13T17:00:00.000Z",
+    "startYear": 2023,
+    "endYear": 2024
+  },
+  "description": "",
+  "displayName": "1-TH02016-cautrucdulieuvagiaithuat-01-HK1-23-24",
+  "occurrences": [
+    {
+      "dayOfWeeks": [1],
+      "endPeriod": 8,
+      "location": "ND409",
+      "practiceGroup": null,
+      "startPeriod": 6,
+      "students": {
+        "listUrl": "https://daotao.vnua.edu.vn/Default.aspx?page=danhsachsvtheonhomhoc&malop=K67CNPMB,%20K67CNPMB&mand=CNP02~ND409~3~6~123456789~",
+        "value": [
+          {
+            "id": "652004",
+            "name": "Âu Tùng Anh"
+          },
+          {
+            "id": "6650392",
+            "name": "Đặng Hoàng Quốc Anh"
+          }
+          // Và nhiều sinh viên khác
+        ]
+      },
+      "weekStr": "123456789"
+    },
+    {
+      "dayOfWeeks": [4],
+      "endPeriod": 10,
+      "location": "ND411",
+      "practiceGroup": null,
+      "startPeriod": 9,
+      "students": {
+        "listUrl": "https://daotao.vnua.edu.vn/Default.aspx?page=danhsachsvtheonhomhoc&malop=K67CNPMB,%20K67CNPMB&mand=CNP02~ND411~3~9~123456789~",
+        "value": [
+          {
+            "id": "642226",
+            "name": "Trịnh Thái Vượng"
+          }
+          // Và nhiều sinh viên khác
+        ]
+      },
+      "weekStr": "123456789"
+    }
+  ],
+  "students": {
+    "listUrl": "https://daotao.vnua.edu.vn/Default.aspx?page=danhsachsvtheonhomhoc&malop=K67CNPMB,%20K67CNPMB&mand=CNP02~ND409~3~6~123456789~",
+    "value": [
+      {
+        "id": "652004",
+        "name": "Âu Tùng Anh"
+      },
+      {
+        "id": "6650392",
+        "name": "Đặng Hoàng Quốc Anh"
+      }
+      // Và nhiều sinh viên khác
+    ]
+  }
+}

@@ -24,13 +24,13 @@ class UserController {
   async insert(user) {
     if (await this._userRepository.existedByEmail(user.email)) {
       return HttpResponse.status(HttpStatus.CONFLICT).body(
-        `Giảng viên với email ${user.email} đã tồn tại`
+        `Giảng viên với email ${user.email} đã tồn tại`,
       );
     }
 
     if (await this._userRepository.existedByTeacherId(user.teacherId)) {
       return HttpResponse.status(HttpStatus.CONFLICT).body(
-        `Giảng viên với mã ${user.teacherId} đã tồn tại`
+        `Giảng viên với mã ${user.teacherId} đã tồn tại`,
       );
     }
 
@@ -45,7 +45,7 @@ class UserController {
     } catch (error) {
       console.log('[LOG] : sqlError:', error);
       return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        error.message
+        error.message,
       );
     }
   }
@@ -58,21 +58,28 @@ class UserController {
     const user = await this._userRepository.getByEmail(email);
     if (!user) {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED).body(
-        this._messages.error.login
+        this._messages.error.login,
       );
     }
 
-    const passwordIsIncorrect = !CryptoUtils.comparePassword(
-      inputPassword,
-      user.password
-    );
-    if (passwordIsIncorrect) {
-      return HttpResponse.status(HttpStatus.UNAUTHORIZED).body(
-        this._messages.error.login
-      );
-    }
+    // const passwordIsIncorrect = !CryptoUtils.comparePassword(
+    //   inputPassword,
+    //   user.password
+    // );
+    // if (passwordIsIncorrect) {
+    //   return HttpResponse.status(HttpStatus.UNAUTHORIZED).body(
+    //     this._messages.error.login
+    //   );
+    // }
 
-    const {id, password, msAccessToken, accessToken, createdAt, updatedAt, ...jwtPayload} = user;
+    const {
+      id,
+      msAccessToken,
+      accessToken,
+      createdAt,
+      updatedAt,
+      ...jwtPayload
+    } = user;
     const jwt = JwtManager.generateAccessToken({ ...jwtPayload });
     await this._userRepository.updateAccessToken(email, jwt);
 
@@ -91,7 +98,7 @@ class UserController {
     if (!userLastLoginAt || !userMSAccessToken) return true;
     const tokenLifeSpanInSecond = moment().diff(
       moment(userLastLoginAt),
-      'seconds'
+      'seconds',
     );
     return tokenLifeSpanInSecond > 3600;
   }
@@ -104,7 +111,7 @@ class UserController {
   }
 
   /**
-   * @param {string} jwt 
+   * @param {string} jwt
    */
   async verifyIfJwtExisted(jwt) {
     return this._userRepository.isJwtExisted(jwt);

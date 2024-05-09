@@ -1,7 +1,9 @@
-const { JwtController } = require("./jwt.controller");
-const { TeacherWebScheduleController } = require("./teacher-web-schedule.controller");
-const { UserController } = require("./user.controller");
-const { MsteamsController } = require("./msteams.controller");
+const { JwtController } = require('./jwt.controller');
+const {
+  TeacherWebScheduleController,
+} = require('./teacher-web-schedule.controller');
+const { UserController } = require('./user.controller');
+const { MsteamsController } = require('./msteams.controller');
 
 /**
  * Đảm bảo các controller chỉ được tạo 1 lần (singleton)
@@ -24,7 +26,7 @@ class ControllerFactory {
    * @type {MsteamsController}
    */
   static _msteamsController = new MsteamsController();
-  
+
   /**
    * @private
    * @type {JwtController}
@@ -61,5 +63,5 @@ class ControllerFactory {
 }
 
 module.exports = {
-  ControllerFactory
-}
+  ControllerFactory,
+};

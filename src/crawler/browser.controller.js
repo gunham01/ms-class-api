@@ -1,7 +1,11 @@
-const { Builder, Capabilities } = require("selenium-webdriver");
-const { Options, ServiceBuilder, setDefaultService } = require("selenium-webdriver/chrome");
-const chromedriver = require("chromedriver");
-const { DriverService } = require("selenium-webdriver/remote");
+const { Builder, Capabilities } = require('selenium-webdriver');
+const {
+  Options,
+  ServiceBuilder,
+  setDefaultService,
+} = require('selenium-webdriver/chrome');
+const chromedriver = require('chromedriver');
+const { DriverService } = require('selenium-webdriver/remote');
 
 class BrowserController {
   static async openChromeWebDriver() {
@@ -9,7 +13,7 @@ class BrowserController {
     // await this.setDefaultChromeService(driverService);
     const options = this.getWebDriverOptions();
     return await new Builder()
-      .forBrowser("chrome")
+      .forBrowser('chrome')
       .setChromeOptions(options)
       .withCapabilities(Capabilities.chrome())
       .build();
@@ -26,7 +30,12 @@ class BrowserController {
 
   static getWebDriverOptions() {
     const options = new Options();
-    options.addArguments("--headless", "--no-sandbox");
+    options.addArguments(
+      '--no-sandbox',
+      '-headless',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+    );
     return options;
   }
 }

@@ -17,9 +17,7 @@
       "pattern": {
         "type": "weekly",
         "interval": 1,
-        "daysOfWeek": [
-          "Tuesday"
-        ]
+        "daysOfWeek": ["Tuesday"]
       },
       "range": {
         "type": "endDate",
@@ -60,9 +58,7 @@
       "pattern": {
         "type": "weekly",
         "interval": 1,
-        "daysOfWeek": [
-          "Friday"
-        ]
+        "daysOfWeek": ["Friday"]
       },
       "range": {
         "type": "endDate",
