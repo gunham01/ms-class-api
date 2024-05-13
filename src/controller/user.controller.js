@@ -27,7 +27,7 @@ class UserController {
         message: 'Email không phải của giảng viên',
       });
     }
-    
+
     if (await this._userRepository.existedByEmail(user.email)) {
       return HttpResponse.status(HttpStatus.CONFLICT).body(
         `Giảng viên với email ${user.email} đã tồn tại`,

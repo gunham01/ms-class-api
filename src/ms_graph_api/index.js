@@ -193,7 +193,8 @@ module.exports = {
       data: event,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -216,7 +217,8 @@ module.exports = {
       data: channel,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -237,7 +239,8 @@ module.exports = {
       url: `/teams/${teamId}/channels?$filter=displayName eq '${channelDisplayName}'`,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -268,7 +271,8 @@ module.exports = {
       },
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -291,7 +295,8 @@ module.exports = {
       }`,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 
   /**
@@ -311,6 +316,20 @@ module.exports = {
       url: `/groups/${teamId}/events/${eventId}/cancel`,
     };
 
-    return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
+  },
+
+  async deleteTeam(token, { teamId }) {
+    /**
+     * @type {AxiosRequestConfig}
+     */
+    const axiosRequestConfig = {
+      headers: generateCommonHeader(token, { method: 'DELETE' }),
+      method: 'delete',
+      url: `/groups/${teamId}`,
+    };
+
+    // return callMsGraphApi(axiosRequestConfig, { msToken: token });
+    return axios(axiosRequestConfig);
   },
 };

@@ -1,6 +1,5 @@
 const { AxiosError } = require('axios');
 const fs = require('fs/promises');
-const { errorMonitor } = require('stream');
 
 class Logger {
   /**
@@ -24,15 +23,12 @@ class Logger {
         : error;
 
     console.dir(errorLog, { depth: null });
-
-    await Logger.logToFile(errorLog);
+    await this.logToFile(JSON.stringify(errorLog, null, 2));
     return errorLog;
   }
 
   static logToFile(error) {
-    return fs.writeFile('../logs/error.log', JSON.stringify(error, null, 2), {
-      flag: 'a',
-    });
+    return fs.writeFile(`${process.cwd()}/src/log/error.log`, error, { flag: 'a' });
   }
 }
 
