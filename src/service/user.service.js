@@ -48,11 +48,7 @@ class UserService {
 
     const refreshToken = msTokenService.aquireRefreshToken(id);
 
-    if (mail.contains('@sv.vnua.edu.vn')) {
-      throw HttpResponse.badRequest({
-        message: 'Email không phải của giảng viên',
-      });
-    } else if (!(await this.userRepository.existedByEmail(mail))) {
+    if (!(await this.userRepository.existedByEmail(mail))) {
       throw HttpResponse.badRequest({ message: 'Tài khoản chưa tồn tại' });
     }
 

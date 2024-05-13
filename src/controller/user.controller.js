@@ -22,6 +22,12 @@ class UserController {
    * @param {User} user
    */
   async insert(user) {
+    if (user.email.includes('@sv.vnua.edu.vn')) {
+      throw HttpResponse.badRequest({
+        message: 'Email không phải của giảng viên',
+      });
+    }
+    
     if (await this._userRepository.existedByEmail(user.email)) {
       return HttpResponse.status(HttpStatus.CONFLICT).body(
         `Giảng viên với email ${user.email} đã tồn tại`,
