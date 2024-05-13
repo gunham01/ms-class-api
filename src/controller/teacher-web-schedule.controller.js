@@ -20,7 +20,7 @@ class TeacherWebScheduleController {
       );
       return HttpResponse.ok(teacherSchedule);
     } catch (error) {
-      Logger.logError(error, { message: 'Lỗi khi lấy lịch từ đào tạo' });
+      await Logger.logError(error, { message: 'Lỗi khi lấy lịch từ đào tạo' });
       return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
         'Có lỗi xảy ra khi lấy lịch: ' + error,
       );

@@ -1,12 +1,13 @@
 const { AxiosError } = require('axios');
 const fs = require('fs/promises');
+const { errorMonitor } = require('stream');
 
 class Logger {
   /**
    * @param {Error | AxiosError} error
    * @param {{message: string }} [options]
    */
-  static logError(error, options) {
+  static async logError(error, options) {
     if (options?.message) {
       console.log(`[ERROR] ${options.message}`);
     }
@@ -23,11 +24,15 @@ class Logger {
         : error;
 
     console.dir(errorLog, { depth: null });
+
+    await Logger.logToFile(errorLog);
     return errorLog;
   }
 
-  static logToFile() {
-    fs.writeFile('../logs/error.log', 'Error message', { flag: 'a' });
+  static logToFile(error) {
+    return fs.writeFile('../logs/error.log', JSON.stringify(error, null, 2), {
+      flag: 'a',
+    });
   }
 }
 

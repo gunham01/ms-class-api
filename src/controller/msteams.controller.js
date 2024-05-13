@@ -39,7 +39,7 @@ class MsteamsController extends BaseController {
 
       return HttpResponse.ok(response);
     } catch (error) {
-      Logger.logError(error, {
+      await Logger.logError(error, {
         message: 'Lỗi khi lấy thông tin người dùng:',
       });
       return HttpResponse.badRequest(error.response?.data.error ?? error);
@@ -102,7 +102,7 @@ class MsteamsController extends BaseController {
 
       return HttpResponse.status(HttpStatus.OK).body();
     } catch (error) {
-      Logger.logError(error, { message: 'Lỗi khi tạo các lớp học:' });
+      await Logger.logError(error, { message: 'Lỗi khi tạo các lớp học:' });
       if (error instanceof HttpResponse) {
         return error;
       }
@@ -171,7 +171,7 @@ class MsteamsController extends BaseController {
           teamId: classId,
         });
       } catch (error) {
-        const errorLog = Logger.logError(error, {
+        const errorLog = await Logger.logError(error, {
           message: 'Lỗi khi lấy tất cả event:',
         });
         return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
