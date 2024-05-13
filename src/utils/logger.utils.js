@@ -1,4 +1,5 @@
 const { AxiosError } = require('axios');
+const fs = require('fs/promises');
 
 class Logger {
   /**
@@ -23,6 +24,10 @@ class Logger {
 
     console.dir(errorLog, { depth: null });
     return errorLog;
+  }
+
+  static logToFile() {
+    fs.writeFile('../logs/error.log', 'Error message', { flag: 'a' });
   }
 }
 
